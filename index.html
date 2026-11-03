@@ -1,173 +1,1259 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#071a16">
-<title>Palm Access | تجربة التعرف على اليد</title>
-<style>
-:root{color-scheme:dark;--bg:#071a16;--panel:#102720;--panel2:#17372d;--green:#32d399;--text:#f1fff8;--muted:#a8c4b7;--danger:#ff7777}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#123b2d 0%,var(--bg) 55%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding:22px}
-main{max-width:760px;margin:auto}.top{text-align:center;margin:12px 0 24px}.logo{width:58px;height:58px;border:1px solid #2b765a;border-radius:18px;display:grid;place-items:center;margin:0 auto 12px;color:var(--green);font-size:30px;background:#102d23}
-h1{font-size:28px;margin:0}.sub{color:var(--muted);margin:8px 0 0;font-size:14px}
-.card{background:linear-gradient(145deg,#102820,#0d211b);border:1px solid #24513f;border-radius:22px;padding:18px;margin:14px 0;box-shadow:0 12px 40px #0003}
-.video-wrap{position:relative;background:#020907;border-radius:17px;overflow:hidden;aspect-ratio:4/3;display:grid;place-items:center}
-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none}
-.overlay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.hand-guide{width:48%;height:75%;border:2px dashed #46dba6;border-radius:48% 48% 35% 35%;opacity:.75;display:grid;place-items:center;color:#b9ffe0;text-shadow:0 2px 8px #000;font-size:13px}
-.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-button{border:0;border-radius:13px;padding:13px 16px;font-weight:700;font-size:15px;cursor:pointer;flex:1;min-width:130px}
-.primary{background:var(--green);color:#052016}.secondary{background:#214638;color:#e9fff5}.danger{background:#472727;color:#ffdede}
-button:disabled{opacity:.45;cursor:not-allowed}
-.status{background:#0a1d17;border:1px solid #214636;border-radius:13px;padding:13px;margin-top:13px;color:var(--muted);min-height:48px;font-size:14px}
-.status.good{color:#8fffd0;border-color:#277c59}.status.bad{color:#ffaaaa;border-color:#844444}
-h2{font-size:18px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px;line-height:1.8}
-label{display:block;color:var(--muted);font-size:13px;margin:12px 0 6px}
-input{width:100%;padding:13px;border-radius:12px;border:1px solid #315c49;background:#081b15;color:white;font-size:15px;direction:ltr}
-.pill{display:inline-block;border-radius:30px;background:#193e30;color:#aaffd5;padding:5px 10px;font-size:12px;margin-bottom:10px}
-footer{text-align:center;color:#779889;font-size:12px;padding:12px}
-</style>
-</head>
-<body>
-<main>
-<header class="top">
-  <div class="logo">✋</div>
-  <h1>Palm Access</h1>
-  <p class="sub">تجربة تعليمية للتعرف على وضع اليد باستخدام كاميرا الهاتف</p>
-</header>
-
-<section class="card">
-  <span class="pill">الكاميرا الخلفية</span>
-  <div class="video-wrap">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="overlay" id="guide"><div class="hand-guide">ضع كفك هنا</div></div>
-  </div>
-  <div class="row">
-    <button class="primary" id="start">تشغيل الكاميرا</button>
-    <button class="secondary" id="stop" disabled>إيقاف الكاميرا</button>
-  </div>
-  <div class="status" id="status">ابدأ بتشغيل الكاميرا، واسمح للمتصفح باستخدامها.</div>
-</section>
-
-<section class="card">
-  <h2>1. تسجيل اليد</h2>
-  <p class="muted">افرد أصابعك بشكل مريح، واجعل كفك واضحًا داخل الإطار. حرّك يدك قليلًا ثم اضغط تسجيل. سيتم حفظ نموذج هندسي تجريبي على هذا الجهاز فقط.</p>
-  <button class="primary" id="enroll" disabled>تسجيل كفي</button>
-  <div class="status" id="saved">لا توجد يد مسجلة على هذا الجهاز.</div>
-</section>
-
-<section class="card">
-  <h2>2. التحقق وتنفيذ الإجراء</h2>
-  <p class="muted">بعد التسجيل، ضع يدك بنفس الوضع تقريبًا واضغط تحقق. لو نجح التطابق، سيظهر زر للانتقال إلى رابط تجديد الباقة.</p>
-  <label for="target">رابط موقع تجديد باقة الإنترنت</label>
-  <input id="target" type="url" placeholder="https://example.com" value="">
-  <div class="row">
-    <button class="secondary" id="verify" disabled>تحقق من كفي</button>
-    <button class="primary" id="go" disabled>الانتقال إلى موقع التجديد</button>
-  </div>
-  <div class="status" id="result">سجّل يدك أولًا لتفعيل التحقق.</div>
-</section>
-
-<section class="card">
-  <h2>إدارة البيانات</h2>
-  <p class="muted">النموذج التجريبي محفوظ في LocalStorage داخل المتصفح. حذف بيانات الموقع أو استخدام متصفح/جهاز آخر قد يحذف التسجيل.</p>
-  <button class="danger" id="clear">حذف تسجيل اليد</button>
-</section>
-<footer>نسخة تجريبية فقط — لا تستخدمها لتأمين حسابات أو تنفيذ مدفوعات حقيقية.</footer>
-</main>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#071510">
+<title>Palm Access | Smart Identity</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script>
-const $ = id => document.getElementById(id);
-const video = $("video");
-let stream = null, hands = null, latest = null, busy = false;
-const STORAGE_KEY = "palmAccessDemoTemplateV1";
-let enrolled = null;
 
-try { enrolled = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch {}
-function setStatus(msg, kind=""){ $("status").textContent=msg; $("status").className="status "+kind; }
-function setResult(msg, kind=""){ $("result").textContent=msg; $("result").className="status "+kind; }
-function updateUI(){
-  $("enroll").disabled = !stream || !latest;
-  $("verify").disabled = !stream || !latest || !enrolled;
-  $("saved").textContent = enrolled ? "يوجد نموذج يد مسجل على هذا الجهاز." : "لا توجد يد مسجلة على هذا الجهاز.";
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg: #071510;
+    --panel: #0d2119;
+    --panel2: #112b20;
+    --green: #32d399;
+    --green2: #16a875;
+    --text: #f2fff8;
+    --muted: #8ca99a;
+    --border: rgba(76, 190, 139, .17);
+    --danger: #ff6868;
 }
-function normalizedLandmarks(landmarks){
-  // Demo only: remove translation and scale using wrist and middle-finger base.
-  const wrist = landmarks[0];
-  const base = landmarks[9];
-  const scale = Math.hypot(base.x-wrist.x, base.y-wrist.y) || 1;
-  return landmarks.flatMap(p => [(p.x-wrist.x)/scale, (p.y-wrist.y)/scale, (p.z-wrist.z)/scale]);
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
-function distance(a,b){
-  if(!a || !b || a.length!==b.length) return Infinity;
-  let sum=0; for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; sum+=d*d; }
-  return Math.sqrt(sum/a.length);
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background:
+        radial-gradient(circle at 50% -10%, #17442e 0%, transparent 45%),
+        var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 22px 15px 40px;
 }
-async function startCamera(){
-  if(!window.Hands){setStatus("تعذر تحميل مكتبة التعرف على اليد. تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة.","bad");return;}
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});
-    video.srcObject=stream; video.style.display="block"; $("guide").style.display="none";
-    await video.play();
-    hands=new Hands({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.7,minTrackingConfidence:.65});
-    hands.onResults(results=>{
-      const hand=results.multiHandLandmarks && results.multiHandLandmarks[0];
-      latest=hand ? normalizedLandmarks(hand) : null;
-      if(hand) setStatus("تم اكتشاف يد. ثبّت وضع الكف للحظة.","good");
-      else setStatus("لم يتم اكتشاف اليد. قرّب الكف واجعله كاملًا داخل الصورة.");
-      updateUI();
-    });
-    processFrames();
-    $("start").disabled=true; $("stop").disabled=false;
-    setStatus("الكاميرا تعمل. وجّهها إلى كفك.","good");
-  }catch(e){setStatus("لم نتمكن من تشغيل الكاميرا. اسمح بصلاحية الكاميرا وافتح الموقع عبر HTTPS.","bad");}
+
+button, input {
+    font-family: inherit;
 }
-async function processFrames(){
-  while(stream){
-    if(!busy && video.readyState>=2 && hands){
-      busy=true;
-      try{await hands.send({image:video});}catch(e){}
-      busy=false;
+
+button {
+    cursor: pointer;
+    border: none;
+}
+
+.container {
+    width: 100%;
+    max-width: 850px;
+    margin: auto;
+}
+
+/* HEADER */
+
+header {
+    text-align: center;
+    padding: 15px 0 25px;
+}
+
+.logo {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 13px;
+    border-radius: 21px;
+    display: grid;
+    place-items: center;
+    font-size: 32px;
+    color: var(--green);
+    background: linear-gradient(145deg, #163d2a, #0c2118);
+    border: 1px solid #286a49;
+    box-shadow: 0 0 35px #32d39917;
+}
+
+header h1 {
+    font-size: 29px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+}
+
+header h1 span {
+    color: var(--green);
+}
+
+header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 7px;
+}
+
+/* CARDS */
+
+.card {
+    background: linear-gradient(145deg, #10271d, #0b1d15);
+    border: 1px solid var(--border);
+    border-radius: 21px;
+    padding: 19px;
+    margin-bottom: 16px;
+    box-shadow: 0 12px 35px #0002;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.card-title .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    color: var(--green);
+    background: #183b2b;
+    font-size: 18px;
+}
+
+/* CAMERA */
+
+.camera-area {
+    position: relative;
+    background: #020906;
+    border-radius: 17px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    border: 1px solid #214c37;
+}
+
+video {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Mirror only the front camera */
+video.mirror {
+    transform: scaleX(-1);
+}
+
+.camera-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 20px;
+}
+
+.camera-placeholder .big-icon {
+    font-size: 52px;
+    opacity: .65;
+}
+
+.camera-placeholder p {
+    font-size: 14px;
+}
+
+.guide {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.hand-frame {
+    width: 45%;
+    height: 75%;
+    border: 2px dashed rgba(50, 211, 153, .85);
+    border-radius: 48% 48% 35% 35%;
+    box-shadow: 0 0 25px #32d39920;
+    position: relative;
+}
+
+.hand-frame::after {
+    content: "ضع كفك داخل الإطار";
+    position: absolute;
+    bottom: -34px;
+    width: 100%;
+    text-align: center;
+    color: #a8f7d2;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.camera-top {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+.camera-badge {
+    padding: 7px 11px;
+    background: #06130ee0;
+    border: 1px solid #ffffff15;
+    border-radius: 30px;
+    font-size: 11px;
+    color: #c8ffe5;
+}
+
+.live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-left: 5px;
+    box-shadow: 0 0 9px var(--green);
+}
+
+.camera-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 13px;
+}
+
+/* BUTTONS */
+
+.btn {
+    padding: 13px 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: .2s;
+    flex: 1;
+}
+
+.btn:active {
+    transform: scale(.97);
+}
+
+.btn-primary {
+    color: #052017;
+    background: linear-gradient(135deg, #42e5a6, #1ab57b);
+    box-shadow: 0 5px 18px #32d39920;
+}
+
+.btn-secondary {
+    background: #1a3a2a;
+    color: #caffdf;
+    border: 1px solid #2c6548;
+}
+
+.btn-danger {
+    background: #3b2020;
+    color: #ffb5b5;
+    border: 1px solid #743d3d;
+}
+
+.btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* STATUS */
+
+.status {
+    margin-top: 13px;
+    padding: 13px;
+    background: #071a12;
+    border: 1px solid #244c36;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 45px;
+}
+
+.status.success {
+    color: #8bffca;
+    border-color: #247c53;
+}
+
+.status.error {
+    color: #ffaaaa;
+    border-color: #793d3d;
+}
+
+.status.info {
+    color: #a8d9ff;
+    border-color: #315c78;
+}
+
+/* SAMPLE PROGRESS */
+
+.progress-wrap {
+    margin-top: 15px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.progress {
+    height: 7px;
+    border-radius: 20px;
+    background: #1a382a;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #19a875, #58efb1);
+    border-radius: inherit;
+    transition: width .3s;
+}
+
+/* FORM */
+
+.field {
+    margin-top: 14px;
+}
+
+.field label {
+    display: block;
+    color: #a9c7b6;
+    font-size: 13px;
+    margin-bottom: 7px;
+}
+
+.field input {
+    width: 100%;
+    background: #071a12;
+    color: white;
+    border: 1px solid #315b43;
+    border-radius: 11px;
+    padding: 13px;
+    outline: none;
+    font-size: 14px;
+    direction: ltr;
+}
+
+.field input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px #32d39912;
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-top: 10px;
+}
+
+/* RESULT */
+
+.result-box {
+    text-align: center;
+    padding: 19px 10px;
+    background: #091b13;
+    border: 1px solid #254c36;
+    border-radius: 15px;
+    margin-top: 14px;
+}
+
+.result-icon {
+    font-size: 35px;
+    margin-bottom: 8px;
+}
+
+.result-box h3 {
+    font-size: 17px;
+    margin-bottom: 5px;
+}
+
+.result-box p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+/* FOOTER */
+
+footer {
+    text-align: center;
+    color: #668574;
+    font-size: 12px;
+    padding: 15px 5px;
+    line-height: 1.8;
+}
+
+@media(max-width:480px) {
+    body {
+        padding: 12px 10px 30px;
     }
-    await new Promise(r=>requestAnimationFrame(r));
-  }
+
+    .card {
+        padding: 15px;
+        border-radius: 17px;
+    }
+
+    header h1 {
+        font-size: 26px;
+    }
+
+    .camera-controls {
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        min-width: 110px;
+    }
 }
-function stopCamera(){
-  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-  if(hands){hands.close();hands=null;}
-  video.srcObject=null; video.style.display="none"; $("guide").style.display="grid";
-  $("start").disabled=false; $("stop").disabled=true; $("enroll").disabled=true; $("verify").disabled=true;
-  latest=null;setStatus("تم إيقاف الكاميرا.");
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div class="logo">✋</div>
+    <h1>Palm <span>Access</span></h1>
+    <p>نظام تجريبي للتعرف على اليد وتنفيذ الأوامر الذكية</p>
+</header>
+
+<!-- CAMERA SECTION -->
+
+<section class="card">
+
+    <div class="card-title">
+        <div class="icon">📷</div>
+        الكاميرا والتعرف على اليد
+    </div>
+
+    <div class="camera-area">
+
+        <video id="video" autoplay playsinline muted></video>
+
+        <div class="camera-placeholder" id="placeholder">
+            <div class="big-icon">✋</div>
+            <p>قم بتشغيل الكاميرا لبدء التجربة</p>
+        </div>
+
+        <div class="guide" id="guide">
+            <div class="hand-frame"></div>
+        </div>
+
+        <div class="camera-top">
+            <div class="camera-badge" id="cameraType">الكاميرا غير مفعلة</div>
+            <div class="camera-badge">
+                <span class="live-dot"></span>
+                PALM SCANNER
+            </div>
+        </div>
+
+    </div>
+
+    <div class="camera-controls">
+        <button class="btn btn-primary" id="startBtn">
+            تشغيل الكاميرا
+        </button>
+
+        <button class="btn btn-secondary" id="switchBtn" disabled>
+            🔄 تبديل الكاميرا
+        </button>
+
+        <button class="btn btn-danger" id="stopBtn" disabled>
+            إيقاف
+        </button>
+    </div>
+
+    <div class="status" id="cameraStatus">
+        في انتظار تشغيل الكاميرا...
+    </div>
+
+</section>
+
+
+<!-- REGISTRATION -->
+
+<section class="card">
+
+    <div class="card-title">
+        <div class="icon">🖐️</div>
+        تسجيل الكف
+    </div>
+
+    <p class="hint">
+        ضع كفك أمام الكاميرا وافرد أصابعك بشكل مريح.
+        سنجمع عدة عينات من وضع يدك لتجهيز نموذج تجريبي.
+    </p>
+
+    <div class="progress-wrap">
+        <div class="progress-info">
+            <span>تقدم التسجيل</span>
+            <span id="sampleCount">0 / 5</span>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="camera-controls">
+        <button class="btn btn-primary" id="enrollBtn" disabled>
+            بدء تسجيل كفي
+        </button>
+
+        <button class="btn btn-secondary" id="deleteBtn">
+            حذف التسجيل
+        </button>
+    </div>
+
+    <div class="status" id="enrollStatus">
+        لم يتم تسجيل أي كف حتى الآن.
+    </div>
+
+</section>
+
+
+<!-- VERIFICATION -->
+
+<section class="card">
+
+    <div class="card-title">
+        <div class="icon">🔐</div>
+        التحقق من الهوية التجريبية
+    </div>
+
+    <p class="hint">
+        بعد التسجيل، ضع كفك أمام الكاميرا واضغط على زر التحقق.
+    </p>
+
+    <button class="btn btn-primary" id="verifyBtn" disabled
+            style="width:100%;margin-top:14px">
+        تحقق من كفي
+    </button>
+
+    <div class="result-box">
+        <div class="result-icon" id="resultIcon">🔍</div>
+        <h3 id="resultTitle">في انتظار التحقق</h3>
+        <p id="resultText">
+            لم يتم تنفيذ أي عملية حتى الآن.
+        </p>
+    </div>
+
+</section>
+
+
+<!-- ACTION -->
+
+<section class="card">
+
+    <div class="card-title">
+        <div class="icon">⚡</div>
+        الإجراء المرتبط بالتعرف
+    </div>
+
+    <div class="field">
+        <label for="targetUrl">رابط موقع تجديد باقة الإنترنت</label>
+        <input
+            type="url"
+            id="targetUrl"
+            placeholder="https://example.com"
+        >
+    </div>
+
+    <p class="hint">
+        بعد نجاح التعرف، يمكنك الضغط على زر الانتقال لفتح الموقع الذي حددته.
+    </p>
+
+    <button class="btn btn-primary" id="goBtn" disabled
+            style="width:100%;margin-top:14px">
+        الانتقال إلى موقع التجديد
+    </button>
+
+</section>
+
+<footer>
+    PALM ACCESS V2 · SMART IDENTITY DEMO
+    <br>
+    مشروع تعليمي تجريبي، وليس نظامًا أمنيًا أو وسيلة دفع حقيقية.
+</footer>
+
+</div>
+
+
+<script>
+
+// =====================================
+// 1. ELEMENTS
+// =====================================
+
+const video = document.getElementById("video");
+
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const switchBtn = document.getElementById("switchBtn");
+
+const enrollBtn = document.getElementById("enrollBtn");
+const verifyBtn = document.getElementById("verifyBtn");
+const deleteBtn = document.getElementById("deleteBtn");
+const goBtn = document.getElementById("goBtn");
+
+const cameraStatus = document.getElementById("cameraStatus");
+const enrollStatus = document.getElementById("enrollStatus");
+
+const resultIcon = document.getElementById("resultIcon");
+const resultTitle = document.getElementById("resultTitle");
+const resultText = document.getElementById("resultText");
+
+const STORAGE_KEY = "palmAccessV2Samples";
+
+
+// =====================================
+// 2. VARIABLES
+// =====================================
+
+let stream = null;
+let hands = null;
+let latestLandmarks = null;
+
+let currentCamera = "environment";
+let processing = false;
+let cameraRunning = false;
+
+let enrolledSamples = [];
+
+let enrollmentTimer = null;
+
+
+// =====================================
+// 3. STATUS FUNCTIONS
+// =====================================
+
+function cameraMessage(message, type = "") {
+    cameraStatus.textContent = message;
+    cameraStatus.className = "status " + type;
 }
-$("start").onclick=startCamera;
-$("stop").onclick=stopCamera;
-$("enroll").onclick=()=>{
-  if(!latest){setStatus("لم يتم اكتشاف يد بعد.","bad");return;}
-  enrolled=latest.slice();localStorage.setItem(STORAGE_KEY,JSON.stringify(enrolled));
-  updateUI();setResult("تم تسجيل نموذج اليد التجريبي بنجاح. جرّب التحقق الآن.","good");
-};
-$("verify").onclick=()=>{
-  if(!latest||!enrolled){setResult("لا توجد يد واضحة أو لا يوجد تسجيل.","bad");return;}
-  const score=distance(latest,enrolled);
-  // Loose threshold for a classroom demo; this is not a secure biometric matcher.
-  if(score<0.20){setResult("التطابق مقبول في التجربة. يمكنك المتابعة إلى صفحة التجديد.","good");$("go").disabled=false;}
-  else{$("go").disabled=true;setResult("لم يحدث تطابق كافٍ. جرّب وضع اليد بنفس الشكل والإضاءة.","bad");}
-};
-$("go").onclick=()=>{
-  const url=$("target").value.trim();
-  try{
-    const parsed=new URL(url);
-    if(!["http:","https:"].includes(parsed.protocol)) throw new Error();
-    location.href=parsed.href;
-  }catch{$("go").disabled=true;setResult("اكتب رابطًا صحيحًا يبدأ بـ https:// أو http://","bad");}
-};
-$("clear").onclick=()=>{
-  localStorage.removeItem(STORAGE_KEY);enrolled=null;$("go").disabled=true;
-  updateUI();setResult("تم حذف نموذج اليد من هذا المتصفح.");
-};
+
+function enrollmentMessage(message, type = "") {
+    enrollStatus.textContent = message;
+    enrollStatus.className = "status " + type;
+}
+
+function resultMessage(icon, title, text) {
+    resultIcon.textContent = icon;
+    resultTitle.textContent = title;
+    resultText.textContent = text;
+}
+
+
+// =====================================
+// 4. LOAD SAVED DATA
+// =====================================
+
+try {
+    const saved = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "[]"
+    );
+
+    if (Array.isArray(saved)) {
+        enrolledSamples = saved;
+    }
+
+} catch {
+    enrolledSamples = [];
+}
+
+
+// =====================================
+// 5. UPDATE UI
+// =====================================
+
+function updateUI() {
+
+    const hasSamples = enrolledSamples.length >= 3;
+
+    enrollBtn.disabled = !cameraRunning || !latestLandmarks;
+    verifyBtn.disabled = !cameraRunning || !latestLandmarks || !hasSamples;
+
+    document.getElementById("sampleCount").textContent =
+        enrolledSamples.length + " / 5";
+
+    document.getElementById("progressBar").style.width =
+        (enrolledSamples.length / 5 * 100) + "%";
+
+    if (hasSamples) {
+        enrollmentMessage(
+            "تم تسجيل نموذج اليد التجريبي على هذا الجهاز.",
+            "success"
+        );
+    }
+}
+
+
+// =====================================
+// 6. NORMALIZE HAND DATA
+// =====================================
+
+function normalizeLandmarks(points) {
+
+    const wrist = points[0];
+    const center = points[9];
+
+    const scale = Math.hypot(
+        center.x - wrist.x,
+        center.y - wrist.y
+    ) || 1;
+
+    return points.flatMap(point => [
+
+        (point.x - wrist.x) / scale,
+
+        (point.y - wrist.y) / scale,
+
+        (point.z - wrist.z) / scale
+
+    ]);
+}
+
+
+// =====================================
+// 7. COMPARE SAMPLES
+// =====================================
+
+function calculateDistance(a, b) {
+
+    if (!a || !b || a.length !== b.length) {
+        return Infinity;
+    }
+
+    let sum = 0;
+
+    for (let i = 0; i < a.length; i++) {
+
+        const diff = a[i] - b[i];
+
+        sum += diff * diff;
+    }
+
+    return Math.sqrt(sum / a.length);
+}
+
+
+function compareWithSamples(current, samples) {
+
+    if (!samples.length) return Infinity;
+
+    const distances = samples.map(sample =>
+        calculateDistance(current, sample)
+    );
+
+    return Math.min(...distances);
+}
+
+
+// =====================================
+// 8. CAMERA
+// =====================================
+
+async function startCamera() {
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+
+        cameraMessage(
+            "المتصفح لا يدعم تشغيل الكاميرا. افتح الموقع عبر HTTPS.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        stopCamera(false);
+
+        cameraMessage("جاري تشغيل الكاميرا...");
+
+        stream = await navigator.mediaDevices.getUserMedia({
+
+            audio: false,
+
+            video: {
+
+                facingMode: {
+                    ideal: currentCamera
+                },
+
+                width: {
+                    ideal: 1280
+                },
+
+                height: {
+                    ideal: 720
+                }
+
+            }
+
+        });
+
+        video.srcObject = stream;
+
+        await video.play();
+
+        // بعض الأجهزة قد تختار كاميرا مختلفة عن المطلوبة.
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+
+        const isFront =
+            settings.facingMode === "user" ||
+            currentCamera === "user";
+
+        video.classList.toggle("mirror", isFront);
+
+        document.getElementById("cameraType").textContent =
+            isFront ? "الكاميرا الأمامية" : "الكاميرا الخلفية";
+
+        document.getElementById("placeholder").style.display = "none";
+        document.getElementById("guide").style.display = "flex";
+
+        hands = new Hands({
+
+            locateFile: file =>
+                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+
+        });
+
+        hands.setOptions({
+
+            maxNumHands: 1,
+
+            modelComplexity: 1,
+
+            minDetectionConfidence: 0.7,
+
+            minTrackingConfidence: 0.65
+
+        });
+
+        hands.onResults(handleResults);
+
+        cameraRunning = true;
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        switchBtn.disabled = false;
+
+        cameraMessage("الكاميرا تعمل. ضع كفك داخل الإطار.", "success");
+
+        processFrames();
+
+        updateUI();
+
+    } catch (error) {
+
+        cameraRunning = false;
+
+        cameraMessage(
+            "تعذر تشغيل الكاميرا. تأكد من صلاحيات الكاميرا واتصال HTTPS.",
+            "error"
+        );
+
+        console.error(error);
+    }
+}
+
+
+// =====================================
+// 9. CAMERA SWITCH
+// =====================================
+
+async function switchCamera() {
+
+    if (!cameraRunning) return;
+
+    currentCamera =
+        currentCamera === "environment"
+            ? "user"
+            : "environment";
+
+    cameraMessage("جاري التبديل بين الكاميرتين...");
+
+    await startCamera();
+}
+
+
+// =====================================
+// 10. STOP CAMERA
+// =====================================
+
+function stopCamera(resetButtons = true) {
+
+    cameraRunning = false;
+    processing = false;
+
+    if (stream) {
+
+        stream.getTracks().forEach(track => track.stop());
+
+        stream = null;
+    }
+
+    if (hands) {
+
+        hands.close();
+
+        hands = null;
+    }
+
+    video.srcObject = null;
+    video.classList.remove("mirror");
+
+    latestLandmarks = null;
+
+    if (resetButtons) {
+
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        switchBtn.disabled = true;
+
+        enrollBtn.disabled = true;
+        verifyBtn.disabled = true;
+
+        document.getElementById("placeholder").style.display = "flex";
+        document.getElementById("guide").style.display = "none";
+
+        cameraMessage("تم إيقاف الكاميرا.");
+    }
+}
+
+
+// =====================================
+// 11. DETECT HAND
+// =====================================
+
+function handleResults(results) {
+
+    const landmarks =
+        results.multiHandLandmarks?.[0];
+
+    if (landmarks) {
+
+        latestLandmarks = normalizeLandmarks(landmarks);
+
+        cameraMessage(
+            "تم اكتشاف اليد بنجاح. حافظ على ثباتها.",
+            "success"
+        );
+
+    } else {
+
+        latestLandmarks = null;
+
+        cameraMessage(
+            "لم يتم اكتشاف اليد. اجعل الكف واضحًا داخل الإطار."
+        );
+    }
+
+    updateUI();
+}
+
+
+// =====================================
+// 12. PROCESS CAMERA FRAMES
+// =====================================
+
+async function processFrames() {
+
+    while (cameraRunning) {
+
+        if (
+            !processing &&
+            hands &&
+            video.readyState >= 2
+        ) {
+
+            processing = true;
+
+            try {
+
+                await hands.send({
+                    image: video
+                });
+
+            } catch (error) {
+
+                console.error(error);
+            }
+
+            processing = false;
+        }
+
+        await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+        );
+    }
+}
+
+
+// =====================================
+// 13. REGISTER HAND
+// =====================================
+
+function startEnrollment() {
+
+    if (!latestLandmarks) {
+
+        enrollmentMessage(
+            "لم يتم اكتشاف اليد.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (enrolledSamples.length >= 5) {
+
+        enrollmentMessage(
+            "وصلت إلى الحد الأقصى للعينات. احذف التسجيل لبدء تسجيل جديد.",
+            "info"
+        );
+
+        return;
+    }
+
+    enrollBtn.disabled = true;
+
+    enrollmentMessage(
+        "جاري تسجيل العينة الأولى... حافظ على ثبات يدك.",
+        "info"
+    );
+
+    let count = 0;
+
+    enrollmentTimer = setInterval(() => {
+
+        if (!latestLandmarks) return;
+
+        enrolledSamples.push(
+            latestLandmarks.slice()
+        );
+
+        count++;
+
+        document.getElementById("sampleCount").textContent =
+            enrolledSamples.length + " / 5";
+
+        document.getElementById("progressBar").style.width =
+            (enrolledSamples.length / 5 * 100) + "%";
+
+        if (count >= 5 || enrolledSamples.length >= 5) {
+
+            clearInterval(enrollmentTimer);
+
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(enrolledSamples)
+            );
+
+            enrollmentMessage(
+                "اكتمل تسجيل العينات التجريبية بنجاح.",
+                "success"
+            );
+
+            resultMessage(
+                "✅",
+                "تم تسجيل اليد",
+                "يمكنك الآن تجربة التحقق من اليد."
+            );
+
+            updateUI();
+
+        } else {
+
+            enrollmentMessage(
+                `تم حفظ العينة ${count} من 5. غيّر وضع يدك قليلًا.`,
+                "info"
+            );
+        }
+
+    }, 1200);
+}
+
+
+// =====================================
+// 14. VERIFY HAND
+// =====================================
+
+function verifyHand() {
+
+    if (!latestLandmarks || enrolledSamples.length < 3) {
+
+        resultMessage(
+            "⚠️",
+            "لا يمكن التحقق",
+            "تأكد من وجود يد واضحة وتسجيل عينات كافية."
+        );
+
+        return;
+    }
+
+    const score = compareWithSamples(
+        latestLandmarks,
+        enrolledSamples
+    );
+
+    // حد تجريبي فقط، وليس معيارًا أمنيًا.
+    const threshold = 0.17;
+
+    if (score < threshold) {
+
+        resultMessage(
+            "✅",
+            "تم التعرف على اليد",
+            "التطابق مقبول في النموذج التجريبي. يمكنك متابعة الإجراء."
+        );
+
+        goBtn.disabled = false;
+
+    } else {
+
+        resultMessage(
+            "❌",
+            "لم يتم التعرف على اليد",
+            "النتيجة غير متطابقة بما يكفي. حاول وضع يدك بنفس الوضع."
+        );
+
+        goBtn.disabled = true;
+    }
+}
+
+
+// =====================================
+// 15. EXECUTE ACTION
+// =====================================
+
+function executeAction() {
+
+    const input = document.getElementById("targetUrl").value.trim();
+
+    try {
+
+        const url = new URL(input);
+
+        if (!["http:", "https:"].includes(url.protocol)) {
+            throw new Error("Invalid protocol");
+        }
+
+        window.location.href = url.href;
+
+    } catch {
+
+        resultMessage(
+            "⚠️",
+            "الرابط غير صحيح",
+            "أدخل رابطًا صحيحًا يبدأ بـ https:// أو http://"
+        );
+    }
+}
+
+
+// =====================================
+// 16. DELETE ENROLLMENT
+// =====================================
+
+function deleteEnrollment() {
+
+    clearInterval(enrollmentTimer);
+
+    enrolledSamples = [];
+
+    localStorage.removeItem(STORAGE_KEY);
+
+    document.getElementById("sampleCount").textContent = "0 / 5";
+    document.getElementById("progressBar").style.width = "0%";
+
+    goBtn.disabled = true;
+
+    enrollmentMessage(
+        "تم حذف تسجيل اليد من هذا المتصفح.",
+        "success"
+    );
+
+    resultMessage(
+        "🔍",
+        "في انتظار التسجيل",
+        "سجّل يدك من جديد لبدء التجربة."
+    );
+
+    updateUI();
+}
+
+
+// =====================================
+// 17. EVENTS
+// =====================================
+
+startBtn.addEventListener("click", startCamera);
+
+stopBtn.addEventListener("click", () => stopCamera());
+
+switchBtn.addEventListener("click", switchCamera);
+
+enrollBtn.addEventListener("click", startEnrollment);
+
+verifyBtn.addEventListener("click", verifyHand);
+
+deleteBtn.addEventListener("click", deleteEnrollment);
+
+goBtn.addEventListener("click", executeAction);
+
+
+// =====================================
+// 18. INITIAL STATE
+// =====================================
+
+if (enrolledSamples.length >= 3) {
+
+    enrollmentMessage(
+        "يوجد تسجيل تجريبي محفوظ على هذا الجهاز.",
+        "success"
+    );
+
+    resultMessage(
+        "🔐",
+        "النظام جاهز",
+        "شغّل الكاميرا وابدأ التحقق."
+    );
+
+} else {
+
+    enrollmentMessage(
+        "لم يتم تسجيل أي كف حتى الآن."
+    );
+}
+
 updateUI();
+
 </script>
+
 </body>
 </html>
