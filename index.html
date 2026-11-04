@@ -1,1259 +1,673 @@
-
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#071510">
-<title>Palm Access | Smart Identity</title>
+<meta name="theme-color" content="#080d18">
+<title>PALM | البث التلفزيوني العالمي</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+    colors: {
+      night: '#080d18', panel: '#101827', card: '#172235',
+      emerald: { 400:'#34d399', 500:'#10b981', 600:'#059669' }
+    },
+    boxShadow: { glow: '0 0 35px rgba(16,185,129,.12)' }
+  }}
+};
+</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
-
-:root {
-    --bg: #071510;
-    --panel: #0d2119;
-    --panel2: #112b20;
-    --green: #32d399;
-    --green2: #16a875;
-    --text: #f2fff8;
-    --muted: #8ca99a;
-    --border: rgba(76, 190, 139, .17);
-    --danger: #ff6868;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Tajawal', sans-serif;
-    background:
-        radial-gradient(circle at 50% -10%, #17442e 0%, transparent 45%),
-        var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 22px 15px 40px;
-}
-
-button, input {
-    font-family: inherit;
-}
-
-button {
-    cursor: pointer;
-    border: none;
-}
-
-.container {
-    width: 100%;
-    max-width: 850px;
-    margin: auto;
-}
-
-/* HEADER */
-
-header {
-    text-align: center;
-    padding: 15px 0 25px;
-}
-
-.logo {
-    width: 65px;
-    height: 65px;
-    margin: 0 auto 13px;
-    border-radius: 21px;
-    display: grid;
-    place-items: center;
-    font-size: 32px;
-    color: var(--green);
-    background: linear-gradient(145deg, #163d2a, #0c2118);
-    border: 1px solid #286a49;
-    box-shadow: 0 0 35px #32d39917;
-}
-
-header h1 {
-    font-size: 29px;
-    font-weight: 800;
-    letter-spacing: -.5px;
-}
-
-header h1 span {
-    color: var(--green);
-}
-
-header p {
-    color: var(--muted);
-    font-size: 14px;
-    margin-top: 7px;
-}
-
-/* CARDS */
-
-.card {
-    background: linear-gradient(145deg, #10271d, #0b1d15);
-    border: 1px solid var(--border);
-    border-radius: 21px;
-    padding: 19px;
-    margin-bottom: 16px;
-    box-shadow: 0 12px 35px #0002;
-}
-
-.card-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 15px;
-}
-
-.card-title .icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
-    display: grid;
-    place-items: center;
-    color: var(--green);
-    background: #183b2b;
-    font-size: 18px;
-}
-
-/* CAMERA */
-
-.camera-area {
-    position: relative;
-    background: #020906;
-    border-radius: 17px;
-    overflow: hidden;
-    aspect-ratio: 4 / 3;
-    border: 1px solid #214c37;
-}
-
-video {
-    display: none;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Mirror only the front camera */
-video.mirror {
-    transform: scaleX(-1);
-}
-
-.camera-placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    color: var(--muted);
-    text-align: center;
-    padding: 20px;
-}
-
-.camera-placeholder .big-icon {
-    font-size: 52px;
-    opacity: .65;
-}
-
-.camera-placeholder p {
-    font-size: 14px;
-}
-
-.guide {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    display: none;
-    justify-content: center;
-    align-items: center;
-}
-
-.hand-frame {
-    width: 45%;
-    height: 75%;
-    border: 2px dashed rgba(50, 211, 153, .85);
-    border-radius: 48% 48% 35% 35%;
-    box-shadow: 0 0 25px #32d39920;
-    position: relative;
-}
-
-.hand-frame::after {
-    content: "ضع كفك داخل الإطار";
-    position: absolute;
-    bottom: -34px;
-    width: 100%;
-    text-align: center;
-    color: #a8f7d2;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.camera-top {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    left: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-}
-
-.camera-badge {
-    padding: 7px 11px;
-    background: #06130ee0;
-    border: 1px solid #ffffff15;
-    border-radius: 30px;
-    font-size: 11px;
-    color: #c8ffe5;
-}
-
-.live-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    margin-left: 5px;
-    box-shadow: 0 0 9px var(--green);
-}
-
-.camera-controls {
-    display: flex;
-    gap: 10px;
-    margin-top: 13px;
-}
-
-/* BUTTONS */
-
-.btn {
-    padding: 13px 15px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 700;
-    transition: .2s;
-    flex: 1;
-}
-
-.btn:active {
-    transform: scale(.97);
-}
-
-.btn-primary {
-    color: #052017;
-    background: linear-gradient(135deg, #42e5a6, #1ab57b);
-    box-shadow: 0 5px 18px #32d39920;
-}
-
-.btn-secondary {
-    background: #1a3a2a;
-    color: #caffdf;
-    border: 1px solid #2c6548;
-}
-
-.btn-danger {
-    background: #3b2020;
-    color: #ffb5b5;
-    border: 1px solid #743d3d;
-}
-
-.btn:disabled {
-    opacity: .4;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* STATUS */
-
-.status {
-    margin-top: 13px;
-    padding: 13px;
-    background: #071a12;
-    border: 1px solid #244c36;
-    border-radius: 12px;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
-    min-height: 45px;
-}
-
-.status.success {
-    color: #8bffca;
-    border-color: #247c53;
-}
-
-.status.error {
-    color: #ffaaaa;
-    border-color: #793d3d;
-}
-
-.status.info {
-    color: #a8d9ff;
-    border-color: #315c78;
-}
-
-/* SAMPLE PROGRESS */
-
-.progress-wrap {
-    margin-top: 15px;
-}
-
-.progress-info {
-    display: flex;
-    justify-content: space-between;
-    color: var(--muted);
-    font-size: 12px;
-    margin-bottom: 8px;
-}
-
-.progress {
-    height: 7px;
-    border-radius: 20px;
-    background: #1a382a;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #19a875, #58efb1);
-    border-radius: inherit;
-    transition: width .3s;
-}
-
-/* FORM */
-
-.field {
-    margin-top: 14px;
-}
-
-.field label {
-    display: block;
-    color: #a9c7b6;
-    font-size: 13px;
-    margin-bottom: 7px;
-}
-
-.field input {
-    width: 100%;
-    background: #071a12;
-    color: white;
-    border: 1px solid #315b43;
-    border-radius: 11px;
-    padding: 13px;
-    outline: none;
-    font-size: 14px;
-    direction: ltr;
-}
-
-.field input:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px #32d39912;
-}
-
-.hint {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.8;
-    margin-top: 10px;
-}
-
-/* RESULT */
-
-.result-box {
-    text-align: center;
-    padding: 19px 10px;
-    background: #091b13;
-    border: 1px solid #254c36;
-    border-radius: 15px;
-    margin-top: 14px;
-}
-
-.result-icon {
-    font-size: 35px;
-    margin-bottom: 8px;
-}
-
-.result-box h3 {
-    font-size: 17px;
-    margin-bottom: 5px;
-}
-
-.result-box p {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.7;
-}
-
-/* FOOTER */
-
-footer {
-    text-align: center;
-    color: #668574;
-    font-size: 12px;
-    padding: 15px 5px;
-    line-height: 1.8;
-}
-
-@media(max-width:480px) {
-    body {
-        padding: 12px 10px 30px;
-    }
-
-    .card {
-        padding: 15px;
-        border-radius: 17px;
-    }
-
-    header h1 {
-        font-size: 26px;
-    }
-
-    .camera-controls {
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        min-width: 110px;
-    }
-}
+:root { color-scheme: dark; --bg:#080d18; --panel:#101827; --card:#172235; --text:#e5edf7; --muted:#91a0b6; --border:rgba(148,163,184,.14); --accent:#10b981; }
+html.light { color-scheme:light; --bg:#f3f6fb; --panel:#fff; --card:#f8fafc; --text:#172033; --muted:#64748b; --border:rgba(100,116,139,.2); --accent:#059669; }
+* { box-sizing:border-box; }
+body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); transition:background .25s,color .25s; }
+.surface { background:var(--panel); border:1px solid var(--border); }
+.card-surface { background:var(--card); border:1px solid var(--border); }
+.muted { color:var(--muted); }
+::-webkit-scrollbar { width:7px;height:7px; }
+::-webkit-scrollbar-thumb { background:#334155;border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:#10b981; }
+::-webkit-scrollbar-track { background:transparent; }
+button,input,select { font:inherit; }
+button:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid #10b981;outline-offset:2px; }
+.channel-card { transition:transform .18s,border-color .18s,background .18s; }
+.channel-card:hover { transform:translateY(-2px);border-color:rgba(16,185,129,.55); }
+.country-button.active { background:rgba(16,185,129,.13);border-color:#10b981;color:#10b981; }
+.loader-ring { width:34px;height:34px;border:3px solid rgba(16,185,129,.2);border-top-color:#10b981;border-radius:50%;animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+#video-player { background:#000; }
 </style>
 </head>
 
-<body>
-
-<div class="container">
-
-<header>
-    <div class="logo">✋</div>
-    <h1>Palm <span>Access</span></h1>
-    <p>نظام تجريبي للتعرف على اليد وتنفيذ الأوامر الذكية</p>
+<body class="min-h-screen">
+<header class="sticky top-0 z-50 surface/90 backdrop-blur-xl border-b px-4 md:px-7">
+  <div class="max-w-7xl mx-auto h-[64px] flex items-center justify-between gap-4">
+    <a href="#" class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white flex items-center justify-center shadow-glow">
+        <i class="fa-solid fa-satellite-dish text-lg"></i>
+      </div>
+      <div>
+        <div class="text-lg font-black tracking-wider">PALM <span class="text-emerald-500">TV</span></div>
+        <div class="text-[10px] muted -mt-1">العالم بين يديك</div>
+      </div>
+    </a>
+    <div class="flex items-center gap-2">
+      <span class="hidden sm:flex items-center gap-2 text-xs muted surface px-3 py-1.5 rounded-full">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        البث العالمي
+      </span>
+      <button id="theme-toggle" class="w-9 h-9 rounded-xl surface hover:border-emerald-500 transition" aria-label="تغيير المظهر">
+        <i id="theme-icon" class="fa-solid fa-sun text-sm"></i>
+      </button>
+    </div>
+  </div>
 </header>
 
-<!-- CAMERA SECTION -->
-
-<section class="card">
-
-    <div class="card-title">
-        <div class="icon">📷</div>
-        الكاميرا والتعرف على اليد
-    </div>
-
-    <div class="camera-area">
-
-        <video id="video" autoplay playsinline muted></video>
-
-        <div class="camera-placeholder" id="placeholder">
-            <div class="big-icon">✋</div>
-            <p>قم بتشغيل الكاميرا لبدء التجربة</p>
+<main class="max-w-7xl mx-auto w-full px-3 sm:px-5 py-3 space-y-3">
+  <!-- Intro / stats -->
+  <section class="relative overflow-hidden rounded-2xl p-4 md:p-5 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white border border-emerald-900/40">
+    <div class="absolute -left-16 -top-20 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl"></div>
+    <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <span class="inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full mb-2">
+          <i class="fa-solid fa-earth-americas"></i> اكتشف العالم من شاشة واحدة
+        </span>
+        <h1 class="text-xl md:text-3xl font-black leading-tight">قنوات العالم، <span class="text-emerald-400">في مكان واحد</span></h1>
+        <p class="text-xs md:text-sm text-slate-300 mt-1 max-w-2xl">اختر الدولة، اكتشف قنواتها، واستمتع بالبث المباشر من خلال مشغل PALM.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 min-w-[210px]">
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400">الدول المتاحة</div><div id="stat-countries" class="text-xl font-black mt-0.5">—</div>
         </div>
-
-        <div class="guide" id="guide">
-            <div class="hand-frame"></div>
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="text-[11px] text-slate-400">القنوات المتاحة</div><div id="stat-channels" class="text-xl font-black mt-0.5">—</div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="camera-top">
-            <div class="camera-badge" id="cameraType">الكاميرا غير مفعلة</div>
-            <div class="camera-badge">
-                <span class="live-dot"></span>
-                PALM SCANNER
-            </div>
+  <!-- Player -->
+  <section id="player-section" class="surface rounded-2xl p-3 shadow-2xl">
+    <div class="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center"><i class="fa-solid fa-tower-broadcast text-xs"></i></div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 text-[11px] font-bold"><span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span> بث مباشر</div>
+          <div id="current-channel-tag" class="text-xs font-bold truncate muted">اختر قناة لبدء المشاهدة</div>
         </div>
-
-    </div>
-
-    <div class="camera-controls">
-        <button class="btn btn-primary" id="startBtn">
-            تشغيل الكاميرا
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="favorite-current" class="hidden text-xs px-2.5 py-1.5 rounded-xl card-surface hover:border-emerald-500 transition">
+          <i id="favorite-current-icon" class="fa-regular fa-heart text-rose-500 ml-1"></i><span id="favorite-current-label">أضف للمفضلة</span>
         </button>
-
-        <button class="btn btn-secondary" id="switchBtn" disabled>
-            🔄 تبديل الكاميرا
+        <button id="stop-player" class="text-xs px-2.5 py-1.5 rounded-xl card-surface hover:border-red-400 transition" title="إيقاف البث">
+          <i class="fa-solid fa-stop ml-1"></i> إيقاف
         </button>
-
-        <button class="btn btn-danger" id="stopBtn" disabled>
-            إيقاف
-        </button>
+      </div>
     </div>
-
-    <div class="status" id="cameraStatus">
-        في انتظار تشغيل الكاميرا...
-    </div>
-
-</section>
-
-
-<!-- REGISTRATION -->
-
-<section class="card">
-
-    <div class="card-title">
-        <div class="icon">🖐️</div>
-        تسجيل الكف
-    </div>
-
-    <p class="hint">
-        ضع كفك أمام الكاميرا وافرد أصابعك بشكل مريح.
-        سنجمع عدة عينات من وضع يدك لتجهيز نموذج تجريبي.
-    </p>
-
-    <div class="progress-wrap">
-        <div class="progress-info">
-            <span>تقدم التسجيل</span>
-            <span id="sampleCount">0 / 5</span>
+    <div class="relative aspect-video max-h-[62vh] bg-black rounded-xl overflow-hidden">
+      <video id="video-player" class="w-full h-full object-contain" controls playsinline></video>
+      <div id="player-overlay" class="absolute inset-0 flex items-center justify-center bg-black/75 p-4 text-center">
+        <div class="max-w-sm">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-xl mx-auto mb-3"><i class="fa-solid fa-play"></i></div>
+          <h2 class="text-white text-base font-bold">جاهز للمشاهدة؟</h2>
+          <p class="text-slate-400 text-xs mt-1">اختر دولة ثم قناة، وسيبدأ التشغيل هنا.</p>
         </div>
-
-        <div class="progress">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
+      </div>
     </div>
-
-    <div class="camera-controls">
-        <button class="btn btn-primary" id="enrollBtn" disabled>
-            بدء تسجيل كفي
-        </button>
-
-        <button class="btn btn-secondary" id="deleteBtn">
-            حذف التسجيل
-        </button>
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 px-1 text-[11px] muted">
+      <span id="player-status" role="status" aria-live="polite">في انتظار اختيار قناة</span>
+      <span><i class="fa-solid fa-circle-info ml-1"></i> حماية ضد التقطيع مفعلة (أداء فائق).</span>
     </div>
+  </section>
 
-    <div class="status" id="enrollStatus">
-        لم يتم تسجيل أي كف حتى الآن.
+  <!-- Search / navigation -->
+  <section class="surface rounded-xl p-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-white" data-tab="countries"><i class="fa-solid fa-globe ml-1.5"></i>الدول</button>
+        <button class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold card-surface hover:border-emerald-500" data-tab="all"><i class="fa-solid fa-tv ml-1.5"></i>كل القنوات</button>
+        <button class="tab-btn px-3 py-1.5 rounded-xl text-xs font-bold card-surface hover:border-emerald-500" data-tab="favorites"><i class="fa-solid fa-heart ml-1.5 text-rose-500"></i>المفضلة <span id="favorites-count" class="mr-1">0</span></button>
+      </div>
+      <div class="relative w-full md:max-w-sm">
+        <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 muted text-xs"></i>
+        <input id="global-search" type="search" placeholder="ابحث عن قناة أو دولة..." class="w-full rounded-xl card-surface py-2 pr-10 pl-9 text-xs focus:border-emerald-500 outline-none">
+        <button id="clear-global-search" class="hidden absolute left-2.5 top-1/2 -translate-y-1/2 muted hover:text-emerald-500" aria-label="مسح البحث"><i class="fa-solid fa-xmark"></i></button>
+      </div>
     </div>
+  </section>
 
-</section>
-
-
-<!-- VERIFICATION -->
-
-<section class="card">
-
-    <div class="card-title">
-        <div class="icon">🔐</div>
-        التحقق من الهوية التجريبية
+  <!-- Country section -->
+  <section id="countries-section" class="surface rounded-xl p-3">
+    <div class="flex items-center justify-between gap-2 mb-2 cursor-pointer select-none" id="toggle-countries-header">
+      <div class="flex items-center gap-2">
+        <h2 class="font-black text-sm"><i class="fa-solid fa-earth-americas text-emerald-500 ml-1.5"></i>اختر الدولة</h2>
+        <span id="countries-count" class="text-[11px] muted"></span>
+      </div>
+      <button class="w-7 h-7 rounded-lg card-surface flex items-center justify-center text-emerald-500 transition hover:bg-emerald-500/10" aria-label="طي/إظهار الدول">
+        <i id="toggle-arrow" class="fa-solid fa-chevron-up transition-transform duration-300 text-xs"></i>
+      </button>
     </div>
-
-    <p class="hint">
-        بعد التسجيل، ضع كفك أمام الكاميرا واضغط على زر التحقق.
-    </p>
-
-    <button class="btn btn-primary" id="verifyBtn" disabled
-            style="width:100%;margin-top:14px">
-        تحقق من كفي
-    </button>
-
-    <div class="result-box">
-        <div class="result-icon" id="resultIcon">🔍</div>
-        <h3 id="resultTitle">في انتظار التحقق</h3>
-        <p id="resultText">
-            لم يتم تنفيذ أي عملية حتى الآن.
-        </p>
+    <div id="countries-container" class="transition-all duration-300 overflow-hidden">
+      <div id="countries-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-1.5 max-h-[260px] overflow-y-auto pr-1">
+        <div class="col-span-full py-6 text-center muted text-xs"><span class="loader-ring inline-block"></span><p class="mt-2">جاري التحميل...</p></div>
+      </div>
     </div>
+  </section>
 
-</section>
-
-
-<!-- ACTION -->
-
-<section class="card">
-
-    <div class="card-title">
-        <div class="icon">⚡</div>
-        الإجراء المرتبط بالتعرف
+  <!-- Channels section -->
+  <section id="channels-section" class="surface rounded-xl p-3">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <div class="flex items-center gap-2.5">
+        <div id="active-country-flag" class="text-2xl">📺</div>
+        <div><h2 id="active-country-name" class="font-black text-sm">القنوات</h2><p id="active-country-channels-count" class="text-[11px] muted mt-0.5">اختر دولة أو تصفح كل القنوات</p></div>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        <select id="category-filter" class="card-surface rounded-xl px-2.5 py-1.5 text-[11px] outline-none focus:border-emerald-500">
+          <option value="">كل التصنيفات</option>
+          <option value="news">أخبار</option><option value="sports">رياضة</option><option value="entertainment">ترفيه</option>
+          <option value="movies">أفلام</option><option value="music">موسيقى</option><option value="kids">أطفال</option>
+          <option value="education">تعليم</option><option value="religious">دينية</option>
+        </select>
+        <select id="sort-filter" class="card-surface rounded-xl px-2.5 py-1.5 text-[11px] outline-none focus:border-emerald-500">
+          <option value="name">ترتيب أبجدي</option><option value="category">حسب التصنيف</option>
+        </select>
+      </div>
     </div>
-
-    <div class="field">
-        <label for="targetUrl">رابط موقع تجديد باقة الإنترنت</label>
-        <input
-            type="url"
-            id="targetUrl"
-            placeholder="https://example.com"
-        >
+    
+    <!-- صندوق القنوات ذو الحركة الحرة والمستقلة -->
+    <div id="channels-list-container" class="max-h-[500px] overflow-y-auto pr-1">
+      <div id="channels-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+        <div class="col-span-full py-8 text-center muted text-xs">اختر دولة لعرض قنواتها أو افتح «كل القنوات».</div>
+      </div>
+      <div id="channels-footer" class="hidden text-center pt-3 pb-2">
+        <button id="load-more" class="px-4 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs font-bold">عرض المزيد</button>
+        <p id="channels-page-info" class="text-[11px] muted mt-1.5"></p>
+      </div>
     </div>
+  </section>
 
-    <p class="hint">
-        بعد نجاح التعرف، يمكنك الضغط على زر الانتقال لفتح الموقع الذي حددته.
-    </p>
+  <footer class="text-center text-[11px] muted py-2">
+    <p>PALM TV — منصة لاستكشاف القنوات العالمية.</p>
+  </footer>
+</main>
 
-    <button class="btn btn-primary" id="goBtn" disabled
-            style="width:100%;margin-top:14px">
-        الانتقال إلى موقع التجديد
-    </button>
-
-</section>
-
-<footer>
-    PALM ACCESS V2 · SMART IDENTITY DEMO
-    <br>
-    مشروع تعليمي تجريبي، وليس نظامًا أمنيًا أو وسيلة دفع حقيقية.
-</footer>
-
-</div>
-
+<div id="toast" class="fixed bottom-4 left-4 z-[100] hidden max-w-[90vw] rounded-xl bg-slate-900 text-white border border-slate-700 px-3 py-2 text-xs shadow-2xl" role="status"></div>
 
 <script>
+'use strict';
 
-// =====================================
-// 1. ELEMENTS
-// =====================================
+const API = {
+  countries: 'https://iptv-org.github.io/api/countries.json',
+  channels: 'https://iptv-org.github.io/api/channels.json',
+  streams: 'https://iptv-org.github.io/api/streams.json'
+};
+const PAGE_SIZE = 36;
+const $ = id => document.getElementById(id);
 
-const video = document.getElementById("video");
+let countries = [];
+let channels = [];
+let streamsByChannel = new Map();
+let countryMap = new Map();
+let currentCountry = null;
+let currentTab = 'countries';
+let activeChannel = null;
+let hls = null;
+let visibleCount = PAGE_SIZE;
+let favorites = readFavorites();
+let toastTimer;
 
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const switchBtn = document.getElementById("switchBtn");
+const arabicCountries = {
+  'EG': 'مصر', 'SA': 'المملكة العربية السعودية', 'AE': 'الإمارات العربية المتحدة',
+  'KW': 'الكويت', 'QA': 'قطر', 'BH': 'البحرين', 'OM': 'سلطنة عمان',
+  'JO': 'الأردن', 'LB': 'لبنان', 'SY': 'سوريا', 'IQ': 'العراق',
+  'PS': 'فلسطين', 'YE': 'اليمن', 'MA': 'المغرب', 'DZ': 'الجزائر',
+  'TN': 'تونس', 'LY': 'ليبيا', 'SD': 'السودان', 'MR': 'موريتانيا',
+  'SO': 'الصومال', 'DJ': 'جيبوتي', 'KM': 'جزر القمر', 'US': 'الولايات المتحدة',
+  'GB': 'المملكة المتحدة', 'FR': 'فرنسا', 'DE': 'ألمانيا', 'IT': 'إيطاليا',
+  'ES': 'إسبانيا', 'TR': 'تركيا', 'RU': 'روسيا', 'CA': 'كندا',
+  'BR': 'البرازيل', 'AR': 'الأرجنتين', 'IN': 'الهند', 'PK': 'باكستان',
+  'JP': 'اليابان', 'KR': 'كوريا الجنوبية', 'CN': 'الصين', 'IL': 'الكيان الصهيوني',
+  'AF': 'أفغانستان', 'AL': 'ألبانيا', 'AD': 'أندورا', 'AO': 'أنغولا',
+  'AG': 'أنتيغوا وباربودا', 'AM': 'أرمينيا', 'AU': 'أستراليا', 'AT': 'النمسا',
+  'AZ': 'أذربيجان', 'BS': 'الباهاما', 'BD': 'بنغلاديش', 'BB': 'باربادوس',
+  'BY': 'بيلاروسيا', 'BE': 'بلجيكا', 'BZ': 'بليز', 'BJ': 'بنين',
+  'BT': 'بوتان', 'BO': 'بوليفيا', 'BA': 'البوسنة والهرسك', 'BW': 'بوتسوانا',
+  'BN': 'بروناي', 'BG': 'بلغاريا', 'BF': 'بوركينا فاسو', 'BI': 'بوروندي',
+  'KH': 'كمبوديا', 'CM': 'الكاميرون', 'CV': 'الرأس الأخضر', 'CF': 'جمهورية أفريقيا الوسطى',
+  'TD': 'تشاد', 'CL': 'تشيلي', 'CO': 'كولومبيا', 'CG': 'الكونغو',
+  'CD': 'جمهورية الكونغو الديمقراطية', 'CR': 'كوستاريكا', 'CI': 'ساحل العاج', 'HR': 'كرواتيا',
+  'CU': 'كوبا', 'CY': 'قبرص', 'CZ': 'التشيك', 'DK': 'الدنمارك',
+  'DM': 'دومينيكا', 'DO': 'جمهورية الدومينيكان', 'EC': 'الإكوادور', 'SV': 'السلفادور',
+  'GQ': 'غينيا الاستوائية', 'ER': 'إريتريا', 'EE': 'إستونيا', 'SZ': 'إسواتيني',
+  'ET': 'إثيوبيا', 'FJ': 'فيجي', 'FI': 'فنلندا', 'GA': 'غابون',
+  'GM': 'غامبيا', 'GE': 'جورجيا', 'GH': 'غانا', 'GR': 'اليونان',
+  'GD': 'غرينادا', 'GT': 'غواتيمالا', 'GN': 'غينيا', 'GW': 'غينيا بيساو',
+  'GY': 'غيانا', 'HT': 'هايتي', 'HN': 'هوندوراس', 'HU': 'المجر',
+  'IS': 'آيسلندا', 'ID': 'إندونيسيا', 'IR': 'إيران', 'IE': 'إيرلندا',
+  'JM': 'جامايكا', 'KZ': 'كازاخستان', 'KE': 'كينيا', 'KI': 'كيريباتي',
+  'KP': 'كوريا الشمالية', 'KG': 'قيرغيزستان', 'LA': 'لاوس', 'LV': 'لاتفيا',
+  'LS': 'ليسوتو', 'LR': 'ليبيريا', 'LT': 'ليتوانيا', 'LU': 'لوكسمبورغ',
+  'MG': 'مدغشقر', 'MW': 'ملاوي', 'MY': 'ماليزيا', 'MV': 'المالديف',
+  'ML': 'مالي', 'MT': 'مالطا', 'MH': 'جزر مارشال', 'MU': 'موريشيوس',
+  'MX': 'المكسيك', 'FM': 'ولايات ميكرونيسيا المتحدة', 'MD': 'مولدوفا', 'MC': 'موناكو',
+  'MN': 'منغوليا', 'ME': 'الجبل الأسود', 'MZ': 'موزمبيق', 'MM': 'ميانمار',
+  'NA': 'ناميبيا', 'NR': 'ناورو', 'NP': 'نيبال', 'NL': 'هولندا',
+  'NZ': 'نيوزيلندا', 'NI': 'نكاراجوا', 'NE': 'النيجر', 'NG': 'نيجيريا',
+  'MK': 'مقدونيا الشمالية', 'NO': 'النرويج', 'PW': 'بالاو', 'PA': 'بنما',
+  'PG': 'بابوا غينيا الجديدة', 'PY': 'باراغواي', 'PE': 'بيرو', 'PH': 'الفلبين',
+  'PL': 'بولندا', 'PT': 'البرتغال', 'RO': 'رومانيا', 'RW': 'رواندا',
+  'KN': 'سانت كيتس ونيفيس', 'LC': 'سانت لوسيا', 'VC': 'سانت فنسنت والغرينادين', 'WS': 'ساموا',
+  'SM': 'سان مارينو', 'ST': 'ساو تومي وبرينسيب', 'SN': 'السنغال', 'RS': 'صربيا',
+  'SC': 'سيشل', 'SL': 'سيرا ليون', 'SG': 'سنغافورة', 'SK': 'سلوفاكيا',
+  'SI': 'سلوفينيا', 'SB': 'جزر سليمان', 'ZA': 'جنوب أفريقيا', 'SS': 'جنوب السودان',
+  'LK': 'سريلانكا', 'SR': 'سورينام', 'SE': 'السويد', 'CH': 'سويسرا',
+  'TW': 'تايوان', 'TJ': 'طاجيكستان', 'TZ': 'تنزانيا', 'TH': 'تايلاند',
+  'TL': 'تيمور الشرقية', 'TG': 'توغو', 'TO': 'تونغا', 'TT': 'ترينيداد وتوباغو',
+  'TM': 'تركمانستان', 'TV': 'توفالو', 'UG': 'أوغندا', 'UA': 'أوكرانيا',
+  'UY': 'أوروغواي', 'UZ': 'أوزبكستان', 'VU': 'فانواتو', 'VA': 'الفاتيكان',
+  'VE': 'فنزويلا', 'VN': 'فيتنام', 'ZM': 'زامبيا', 'ZW': 'زيمبابوي'
+};
 
-const enrollBtn = document.getElementById("enrollBtn");
-const verifyBtn = document.getElementById("verifyBtn");
-const deleteBtn = document.getElementById("deleteBtn");
-const goBtn = document.getElementById("goBtn");
+function readFavorites() {
+  try {
+    const value = JSON.parse(localStorage.getItem('palm_favorites_v2') || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch { return []; }
+}
+function normalizeText(value='') {
+  return String(value).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+    .replace(/[ًٌٍَُِّْـ]/g,'').trim();
+}
+function escapeHTML(value='') {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[char]));
+}
+function showToast(message) {
+  const toast = $('toast');
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 3200);
+}
+function setStatus(message) { $('player-status').textContent = message; }
+function setOverlay(title, message, loading=false) {
+  const overlay = $('player-overlay');
+  overlay.innerHTML = loading
+    ? `<div class="text-center"><span class="loader-ring inline-block"></span><p class="text-white font-bold mt-2 text-xs">${escapeHTML(title)}</p><p class="text-slate-400 text-[11px] mt-0.5">${escapeHTML(message)}</p></div>`
+    : `<div class="max-w-sm text-center"><div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-lg mx-auto mb-2"><i class="fa-solid fa-circle-info"></i></div><p class="text-white font-bold text-xs">${escapeHTML(title)}</p><p class="text-slate-400 text-[11px] mt-1">${escapeHTML(message)}</p></div>`;
+  overlay.classList.remove('hidden');
+}
+function hideOverlay() { $('player-overlay').classList.add('hidden'); }
 
-const cameraStatus = document.getElementById("cameraStatus");
-const enrollStatus = document.getElementById("enrollStatus");
-
-const resultIcon = document.getElementById("resultIcon");
-const resultTitle = document.getElementById("resultTitle");
-const resultText = document.getElementById("resultText");
-
-const STORAGE_KEY = "palmAccessV2Samples";
-
-
-// =====================================
-// 2. VARIABLES
-// =====================================
-
-let stream = null;
-let hands = null;
-let latestLandmarks = null;
-
-let currentCamera = "environment";
-let processing = false;
-let cameraRunning = false;
-
-let enrolledSamples = [];
-
-let enrollmentTimer = null;
-
-
-// =====================================
-// 3. STATUS FUNCTIONS
-// =====================================
-
-function cameraMessage(message, type = "") {
-    cameraStatus.textContent = message;
-    cameraStatus.className = "status " + type;
+async function fetchJSON(url) {
+  try {
+    const response = await fetch(url, { cache: 'force-cache' });
+    if (!response.ok) throw new Error('Network error');
+    return await response.json();
+  } catch (e) {
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const res = await fetch(proxyUrl);
+    return await res.json();
+  }
 }
 
-function enrollmentMessage(message, type = "") {
-    enrollStatus.textContent = message;
-    enrollStatus.className = "status " + type;
-}
-
-function resultMessage(icon, title, text) {
-    resultIcon.textContent = icon;
-    resultTitle.textContent = title;
-    resultText.textContent = text;
-}
-
-
-// =====================================
-// 4. LOAD SAVED DATA
-// =====================================
-
-try {
-    const saved = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || "[]"
-    );
-
-    if (Array.isArray(saved)) {
-        enrolledSamples = saved;
-    }
-
-} catch {
-    enrolledSamples = [];
-}
-
-
-// =====================================
-// 5. UPDATE UI
-// =====================================
-
-function updateUI() {
-
-    const hasSamples = enrolledSamples.length >= 3;
-
-    enrollBtn.disabled = !cameraRunning || !latestLandmarks;
-    verifyBtn.disabled = !cameraRunning || !latestLandmarks || !hasSamples;
-
-    document.getElementById("sampleCount").textContent =
-        enrolledSamples.length + " / 5";
-
-    document.getElementById("progressBar").style.width =
-        (enrolledSamples.length / 5 * 100) + "%";
-
-    if (hasSamples) {
-        enrollmentMessage(
-            "تم تسجيل نموذج اليد التجريبي على هذا الجهاز.",
-            "success"
-        );
-    }
-}
-
-
-// =====================================
-// 6. NORMALIZE HAND DATA
-// =====================================
-
-function normalizeLandmarks(points) {
-
-    const wrist = points[0];
-    const center = points[9];
-
-    const scale = Math.hypot(
-        center.x - wrist.x,
-        center.y - wrist.y
-    ) || 1;
-
-    return points.flatMap(point => [
-
-        (point.x - wrist.x) / scale,
-
-        (point.y - wrist.y) / scale,
-
-        (point.z - wrist.z) / scale
-
+async function init() {
+  try {
+    setStatus('جاري تحميل المنصة بذكاء وسرعة...');
+    
+    const [countryData, channelData, streamData] = await Promise.all([
+      fetchJSON(API.countries), 
+      fetchJSON(API.channels),
+      fetchJSON(API.streams)
     ]);
+
+    countryData.forEach(c => {
+      let arabicName = arabicCountries[c.code] || c.name;
+      if (c.code === 'IL') arabicName = 'الكيان الصهيوني';
+      countryMap.set(c.code, {
+        code: c.code, 
+        name: arabicName,
+        originalName: c.name, 
+        flag: c.flag || '🌐'
+      });
+    });
+
+    streamsByChannel.clear();
+    streamData.forEach(stream => {
+      if (!stream.channel || !stream.url) return;
+      if (!streamsByChannel.has(stream.channel)) streamsByChannel.set(stream.channel, []);
+      streamsByChannel.get(stream.channel).push(stream.url);
+    });
+
+    channels = channelData
+      .filter(ch => ch.country && streamsByChannel.has(ch.id))
+      .map(ch => ({...ch, name: ch.name || ch.id, categories: ch.categories || []}));
+
+    countries = [...new Set(channels.map(ch => ch.country))]
+      .map(code => countryMap.get(code)).filter(Boolean)
+      .map(country => ({...country, count: channels.filter(ch => ch.country === country.code).length}))
+      .sort((a,b) => b.count - a.count);
+
+    $('stat-countries').textContent = countries.length.toLocaleString('ar-EG');
+    $('stat-channels').textContent = channels.length.toLocaleString('ar-EG');
+    $('countries-count').textContent = `${countries.length} دولة`;
+    
+    renderCountries();
+    updateFavoritesCount();
+    renderChannels();
+    
+    setStatus('جاهز للمشاهدة بدون تقطيع');
+    showToast(`تم تحميل ${channels.length.toLocaleString('ar-EG')} قناة بنجاح`);
+  } catch (error) {
+    console.error('PALM error:', error);
+    $('countries-list').innerHTML = `
+      <div class="col-span-full text-center text-rose-400 text-xs py-4">
+        تعذر الاتصال بالمصدر. اضغط لإعادة المحاولة.
+        <br><button onclick="init()" class="mt-2 px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-[11px] font-bold">إعادة المحاولة</button>
+      </div>`;
+    setStatus('خطأ في الاتصال');
+  }
 }
 
-
-// =====================================
-// 7. COMPARE SAMPLES
-// =====================================
-
-function calculateDistance(a, b) {
-
-    if (!a || !b || a.length !== b.length) {
-        return Infinity;
-    }
-
-    let sum = 0;
-
-    for (let i = 0; i < a.length; i++) {
-
-        const diff = a[i] - b[i];
-
-        sum += diff * diff;
-    }
-
-    return Math.sqrt(sum / a.length);
+function renderCountries(query='') {
+  const q = normalizeText(query);
+  const list = countries.filter(c => !q || normalizeText(`${c.name} ${c.originalName} ${c.code}`).includes(q));
+  $('countries-count').textContent = `${list.length} نتيجة`;
+  if (!list.length) {
+    $('countries-list').innerHTML = `<div class="col-span-full py-6 text-center muted text-xs">لا توجد دولة مطابقة.</div>`;
+    return;
+  }
+  $('countries-list').innerHTML = list.map(c => `
+    <button class="country-button ${currentCountry===c.code?'active':''} card-surface rounded-xl p-2.5 text-right hover:border-emerald-500 transition"
+      data-country="${escapeHTML(c.code)}">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">${escapeHTML(c.flag)}</span>
+        <div class="min-w-0"><div class="font-bold text-xs truncate">${escapeHTML(c.name)}</div>
+        <div class="text-[10px] muted mt-0.5">${c.count.toLocaleString('ar-EG')} قناة</div></div>
+      </div>
+    </button>`).join('');
 }
 
-
-function compareWithSamples(current, samples) {
-
-    if (!samples.length) return Infinity;
-
-    const distances = samples.map(sample =>
-        calculateDistance(current, sample)
-    );
-
-    return Math.min(...distances);
+function chooseCountry(code) {
+  currentCountry = code;
+  const country = countryMap.get(code);
+  $('active-country-flag').textContent = country?.flag || '📺';
+  $('active-country-name').textContent = country?.name || code;
+  setTab('countries');
+  visibleCount = PAGE_SIZE;
+  renderCountries($('global-search').value);
+  renderChannels();
+  
+  const container = $('countries-container');
+  const arrow = $('toggle-arrow');
+  container.style.maxHeight = '0px';
+  container.style.opacity = '0';
+  arrow.style.transform = 'rotate(180deg)';
 }
 
-
-// =====================================
-// 8. CAMERA
-// =====================================
-
-async function startCamera() {
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-
-        cameraMessage(
-            "المتصفح لا يدعم تشغيل الكاميرا. افتح الموقع عبر HTTPS.",
-            "error"
-        );
-
-        return;
-    }
-
-    try {
-
-        stopCamera(false);
-
-        cameraMessage("جاري تشغيل الكاميرا...");
-
-        stream = await navigator.mediaDevices.getUserMedia({
-
-            audio: false,
-
-            video: {
-
-                facingMode: {
-                    ideal: currentCamera
-                },
-
-                width: {
-                    ideal: 1280
-                },
-
-                height: {
-                    ideal: 720
-                }
-
-            }
-
-        });
-
-        video.srcObject = stream;
-
-        await video.play();
-
-        // بعض الأجهزة قد تختار كاميرا مختلفة عن المطلوبة.
-        const track = stream.getVideoTracks()[0];
-        const settings = track.getSettings();
-
-        const isFront =
-            settings.facingMode === "user" ||
-            currentCamera === "user";
-
-        video.classList.toggle("mirror", isFront);
-
-        document.getElementById("cameraType").textContent =
-            isFront ? "الكاميرا الأمامية" : "الكاميرا الخلفية";
-
-        document.getElementById("placeholder").style.display = "none";
-        document.getElementById("guide").style.display = "flex";
-
-        hands = new Hands({
-
-            locateFile: file =>
-                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-
-        });
-
-        hands.setOptions({
-
-            maxNumHands: 1,
-
-            modelComplexity: 1,
-
-            minDetectionConfidence: 0.7,
-
-            minTrackingConfidence: 0.65
-
-        });
-
-        hands.onResults(handleResults);
-
-        cameraRunning = true;
-
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        switchBtn.disabled = false;
-
-        cameraMessage("الكاميرا تعمل. ضع كفك داخل الإطار.", "success");
-
-        processFrames();
-
-        updateUI();
-
-    } catch (error) {
-
-        cameraRunning = false;
-
-        cameraMessage(
-            "تعذر تشغيل الكاميرا. تأكد من صلاحيات الكاميرا واتصال HTTPS.",
-            "error"
-        );
-
-        console.error(error);
-    }
+function getBaseChannels() {
+  if (currentTab === 'favorites') return channels.filter(ch => favorites.includes(ch.id));
+  if (currentTab === 'countries' && currentCountry) return channels.filter(ch => ch.country === currentCountry);
+  return channels;
+}
+function getFilteredChannels() {
+  const query = normalizeText($('global-search').value);
+  const category = $('category-filter').value;
+  let list = getBaseChannels().filter(ch => {
+    const country = countryMap.get(ch.country);
+    const matchesQuery = !query || normalizeText(`${ch.name} ${ch.id} ${country?.name || ''} ${(ch.categories||[]).join(' ')}`).includes(query);
+    const matchesCategory = !category || (ch.categories||[]).some(cat => normalizeText(cat) === normalizeText(category));
+    return matchesQuery && matchesCategory;
+  });
+  if ($('sort-filter').value === 'category') {
+    list.sort((a,b) => (a.categories?.[0]||'').localeCompare(b.categories?.[0]||''));
+  } else {
+    list.sort((a,b) => a.name.localeCompare(b.name));
+  }
+  return list;
+}
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.className = `tab-btn px-3 py-1.5 rounded-xl text-xs font-bold transition ${active?'bg-emerald-500 text-white':'card-surface hover:border-emerald-500'}`;
+  });
+  $('countries-section').classList.toggle('hidden', tab !== 'countries');
+  if (tab === 'all') {
+    currentCountry = null;
+    $('active-country-flag').textContent = '🌍';
+    $('active-country-name').textContent = 'كل القنوات العالمية';
+  } else if (tab === 'favorites') {
+    currentCountry = null;
+    $('active-country-flag').textContent = '❤️';
+    $('active-country-name').textContent = 'قنواتك المفضلة';
+  } else if (tab === 'countries' && !currentCountry) {
+    $('active-country-flag').textContent = '📺';
+    $('active-country-name').textContent = 'اختر دولة لعرض قنواتها';
+  }
+  visibleCount = PAGE_SIZE;
+  renderChannels();
+}
+function renderChannels() {
+  const list = getFilteredChannels();
+  const visible = list.slice(0, visibleCount);
+  $('active-country-channels-count').textContent = `${list.length.toLocaleString('ar-EG')} قناة متاحة`;
+  if (!list.length) {
+    const msg = currentTab==='favorites' ? 'لم تضف أي قناة للمفضلة.' : 'لا توجد قنوات مطابقة.';
+    $('channels-list').innerHTML = `<div class="col-span-full py-8 text-center muted text-xs"><i class="fa-solid fa-tv text-2xl mb-2 block opacity-40"></i>${msg}</div>`;
+    $('channels-footer').classList.add('hidden');
+    return;
+  }
+  $('channels-list').innerHTML = visible.map(ch => {
+    const isFav = favorites.includes(ch.id);
+    const logo = ch.logo ? `<img src="${escapeHTML(ch.logo)}" alt="" loading="lazy" class="w-full h-full object-contain" onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden')">` : '';
+    const fallback = `<i class="fa-solid fa-tv text-slate-500 ${ch.logo?'hidden':''}"></i>`;
+    const country = countryMap.get(ch.country);
+    const category = ch.categories?.[0] || 'عام';
+    return `<article class="channel-card card-surface rounded-xl p-2.5 flex items-center gap-2.5 cursor-pointer" data-play="${escapeHTML(ch.id)}" tabindex="0" role="button">
+      <div class="w-10 h-10 rounded-lg bg-slate-900/10 border border-slate-500/10 flex items-center justify-center shrink-0 overflow-hidden">${logo}${fallback}</div>
+      <div class="min-w-0 flex-1">
+        <h3 class="font-bold text-xs truncate">${escapeHTML(ch.name)}</h3>
+        <p class="text-[10px] muted truncate mt-0.5">${escapeHTML(country?.name || ch.country)} · ${escapeHTML(category)}</p>
+        <p class="text-[9px] text-emerald-500 mt-0.5"><i class="fa-solid fa-circle-play ml-1"></i> مشاهدة</p>
+      </div>
+      <button class="favorite-channel w-8 h-8 rounded-lg hover:bg-rose-500/10 text-rose-500 shrink-0 flex items-center justify-center text-xs" data-favorite="${escapeHTML(ch.id)}">
+        <i class="${isFav?'fa-solid':'fa-regular'} fa-heart"></i>
+      </button>
+    </article>`;
+  }).join('');
+  $('channels-footer').classList.toggle('hidden', list.length <= visibleCount);
+  $('channels-page-info').textContent = `عرض ${visible.length} من ${list.length}`;
+}
+function updateFavoritesCount() {
+  $('favorites-count').textContent = favorites.length.toLocaleString('ar-EG');
+}
+function toggleFavorite(id) {
+  favorites = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
+  try { localStorage.setItem('palm_favorites_v2', JSON.stringify(favorites)); } catch {}
+  updateFavoritesCount();
+  renderChannels();
+  updateCurrentFavoriteButton();
+}
+function updateCurrentFavoriteButton() {
+  if (!activeChannel) return;
+  const isFav = favorites.includes(activeChannel.id);
+  $('favorite-current-icon').className = `${isFav?'fa-solid':'fa-regular'} fa-heart text-rose-500 ml-1`;
+  $('favorite-current-label').textContent = isFav ? 'في المفضلة' : 'أضف للمفضلة';
+}
+function stopPlayback() {
+  if (hls) { hls.destroy(); hls = null; }
+  const videoPlayer = $('video-player');
+  videoPlayer.pause();
+  videoPlayer.removeAttribute('src');
+  videoPlayer.load();
+  activeChannel = null;
+  $('favorite-current').classList.add('hidden');
+  $('current-channel-tag').textContent = 'اختر قناة لبدء المشاهدة';
+  setOverlay('جاهز للمشاهدة؟','اختر دولة ثم قناة، وسيبدأ التشغيل هنا.');
+  setStatus('تم إيقاف البث');
+}
+function playChannel(id) {
+  const channel = channels.find(ch => ch.id === id);
+  const streamList = streamsByChannel.get(id) || [];
+  if (!channel || !streamList.length) return showToast('لا يوجد رابط بث متاح لهذه القناة.');
+  if (hls) { hls.destroy(); hls = null; }
+  const videoPlayer = $('video-player');
+  videoPlayer.pause();
+  videoPlayer.removeAttribute('src');
+  videoPlayer.load();
+  activeChannel = {id, name:channel.name};
+  $('current-channel-tag').textContent = channel.name;
+  $('favorite-current').classList.remove('hidden');
+  updateCurrentFavoriteButton();
+  
+  $('player-section').scrollIntoView({behavior:'smooth', block:'start'});
+  tryStream(streamList, 0);
 }
 
+function tryStream(streamList, index) {
+  if (index >= streamList.length) {
+    setOverlay('تعذر تشغيل القناة','رابط البث غير متوفر حالياً أو محجوب.');
+    setStatus('فشل التشغيل');
+    return;
+  }
+  let url = streamList[index];
+  setOverlay('جاري الاتصال بالبث','انتظر لحظات...',true);
+  setStatus(`جاري تشغيل المصدر ${index+1}...`);
 
-// =====================================
-// 9. CAMERA SWITCH
-// =====================================
-
-async function switchCamera() {
-
-    if (!cameraRunning) return;
-
-    currentCamera =
-        currentCamera === "environment"
-            ? "user"
-            : "environment";
-
-    cameraMessage("جاري التبديل بين الكاميرتين...");
-
-    await startCamera();
+  const videoPlayer = $('video-player');
+  const isHls = /\.m3u8($|[?#])/i.test(url) || url.includes('.m3u8');
+  
+  if (isHls && window.Hls && Hls.isSupported()) {
+    hls = new Hls({
+      enableWorker: true,
+      lowLatencyMode: false,
+      backBufferLength: 90,
+      maxBufferLength: 60,
+      maxMaxBufferLength: 120,
+      maxBufferSize: 60 * 1000 * 1000,
+      liveSyncDurationCount: 3,
+      liveMaxLatencyDurationCount: 10
+    });
+    let advanced = false;
+    const fallback = () => {
+      if (advanced) return;
+      advanced = true;
+      if (hls) { hls.destroy(); hls = null; }
+      tryStream(streamList, index+1);
+    };
+    hls.loadSource(url);
+    hls.attachMedia(videoPlayer);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      videoPlayer.play().then(() => {
+        hideOverlay(); setStatus('البث يعمل الآن بثبات تام');
+      }).catch(() => {
+        hideOverlay(); setStatus('اضغط على علامة التشغيل داخل الفيديو');
+      });
+    });
+    hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) fallback(); });
+    setTimeout(() => { if (!videoPlayer.currentTime && videoPlayer.readyState === 0) fallback(); }, 12000);
+  } else {
+    videoPlayer.src = url;
+    videoPlayer.load();
+    videoPlayer.play().then(() => {
+      hideOverlay(); setStatus('البث يعمل الآن بثبات تام');
+    }).catch(() => {
+      hideOverlay();
+      setStatus('اضغط تشغيل يدوياً');
+    });
+    videoPlayer.onerror = () => tryStream(streamList, index+1);
+  }
 }
 
+// Toggle Countries Collapse Feature
+const toggleHeader = $('toggle-countries-header');
+const countriesContainer = $('countries-container');
+const toggleArrow = $('toggle-arrow');
+let isCountriesOpen = true;
 
-// =====================================
-// 10. STOP CAMERA
-// =====================================
+toggleHeader.addEventListener('click', () => {
+  isCountriesOpen = !isCountriesOpen;
+  if (isCountriesOpen) {
+    countriesContainer.style.maxHeight = '260px';
+    countriesContainer.style.opacity = '1';
+    toggleArrow.style.transform = 'rotate(0deg)';
+  } else {
+    countriesContainer.style.maxHeight = '0px';
+    countriesContainer.style.opacity = '0';
+    toggleArrow.style.transform = 'rotate(180deg)';
+  }
+});
+countriesContainer.style.maxHeight = '260px';
+countriesContainer.style.transition = 'max-height 0.3s ease, opacity 0.3s ease';
 
-function stopCamera(resetButtons = true) {
-
-    cameraRunning = false;
-    processing = false;
-
-    if (stream) {
-
-        stream.getTracks().forEach(track => track.stop());
-
-        stream = null;
-    }
-
-    if (hands) {
-
-        hands.close();
-
-        hands = null;
-    }
-
-    video.srcObject = null;
-    video.classList.remove("mirror");
-
-    latestLandmarks = null;
-
-    if (resetButtons) {
-
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        switchBtn.disabled = true;
-
-        enrollBtn.disabled = true;
-        verifyBtn.disabled = true;
-
-        document.getElementById("placeholder").style.display = "flex";
-        document.getElementById("guide").style.display = "none";
-
-        cameraMessage("تم إيقاف الكاميرا.");
-    }
+// Theme handling
+const themeToggle = $('theme-toggle');
+const themeIcon = $('theme-icon');
+function applyTheme(isLight) {
+  document.documentElement.classList.toggle('light', isLight);
+  document.documentElement.classList.toggle('dark', !isLight);
+  themeIcon.className = isLight ? 'fa-solid fa-moon text-xs' : 'fa-solid fa-sun text-xs';
+  localStorage.setItem('palm_theme', isLight ? 'light' : 'dark');
+}
+themeToggle.addEventListener('click', () => {
+  applyTheme(!document.documentElement.classList.contains('light'));
+});
+if (localStorage.getItem('palm_theme') === 'light') {
+  applyTheme(true);
 }
 
-
-// =====================================
-// 11. DETECT HAND
-// =====================================
-
-function handleResults(results) {
-
-    const landmarks =
-        results.multiHandLandmarks?.[0];
-
-    if (landmarks) {
-
-        latestLandmarks = normalizeLandmarks(landmarks);
-
-        cameraMessage(
-            "تم اكتشاف اليد بنجاح. حافظ على ثباتها.",
-            "success"
-        );
-
-    } else {
-
-        latestLandmarks = null;
-
-        cameraMessage(
-            "لم يتم اكتشاف اليد. اجعل الكف واضحًا داخل الإطار."
-        );
-    }
-
-    updateUI();
-}
-
-
-// =====================================
-// 12. PROCESS CAMERA FRAMES
-// =====================================
-
-async function processFrames() {
-
-    while (cameraRunning) {
-
-        if (
-            !processing &&
-            hands &&
-            video.readyState >= 2
-        ) {
-
-            processing = true;
-
-            try {
-
-                await hands.send({
-                    image: video
-                });
-
-            } catch (error) {
-
-                console.error(error);
-            }
-
-            processing = false;
-        }
-
-        await new Promise(resolve =>
-            requestAnimationFrame(resolve)
-        );
-    }
-}
-
-
-// =====================================
-// 13. REGISTER HAND
-// =====================================
-
-function startEnrollment() {
-
-    if (!latestLandmarks) {
-
-        enrollmentMessage(
-            "لم يتم اكتشاف اليد.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (enrolledSamples.length >= 5) {
-
-        enrollmentMessage(
-            "وصلت إلى الحد الأقصى للعينات. احذف التسجيل لبدء تسجيل جديد.",
-            "info"
-        );
-
-        return;
-    }
-
-    enrollBtn.disabled = true;
-
-    enrollmentMessage(
-        "جاري تسجيل العينة الأولى... حافظ على ثبات يدك.",
-        "info"
-    );
-
-    let count = 0;
-
-    enrollmentTimer = setInterval(() => {
-
-        if (!latestLandmarks) return;
-
-        enrolledSamples.push(
-            latestLandmarks.slice()
-        );
-
-        count++;
-
-        document.getElementById("sampleCount").textContent =
-            enrolledSamples.length + " / 5";
-
-        document.getElementById("progressBar").style.width =
-            (enrolledSamples.length / 5 * 100) + "%";
-
-        if (count >= 5 || enrolledSamples.length >= 5) {
-
-            clearInterval(enrollmentTimer);
-
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(enrolledSamples)
-            );
-
-            enrollmentMessage(
-                "اكتمل تسجيل العينات التجريبية بنجاح.",
-                "success"
-            );
-
-            resultMessage(
-                "✅",
-                "تم تسجيل اليد",
-                "يمكنك الآن تجربة التحقق من اليد."
-            );
-
-            updateUI();
-
-        } else {
-
-            enrollmentMessage(
-                `تم حفظ العينة ${count} من 5. غيّر وضع يدك قليلًا.`,
-                "info"
-            );
-        }
-
-    }, 1200);
-}
-
-
-// =====================================
-// 14. VERIFY HAND
-// =====================================
-
-function verifyHand() {
-
-    if (!latestLandmarks || enrolledSamples.length < 3) {
-
-        resultMessage(
-            "⚠️",
-            "لا يمكن التحقق",
-            "تأكد من وجود يد واضحة وتسجيل عينات كافية."
-        );
-
-        return;
-    }
-
-    const score = compareWithSamples(
-        latestLandmarks,
-        enrolledSamples
-    );
-
-    // حد تجريبي فقط، وليس معيارًا أمنيًا.
-    const threshold = 0.17;
-
-    if (score < threshold) {
-
-        resultMessage(
-            "✅",
-            "تم التعرف على اليد",
-            "التطابق مقبول في النموذج التجريبي. يمكنك متابعة الإجراء."
-        );
-
-        goBtn.disabled = false;
-
-    } else {
-
-        resultMessage(
-            "❌",
-            "لم يتم التعرف على اليد",
-            "النتيجة غير متطابقة بما يكفي. حاول وضع يدك بنفس الوضع."
-        );
-
-        goBtn.disabled = true;
-    }
-}
-
-
-// =====================================
-// 15. EXECUTE ACTION
-// =====================================
-
-function executeAction() {
-
-    const input = document.getElementById("targetUrl").value.trim();
-
-    try {
-
-        const url = new URL(input);
-
-        if (!["http:", "https:"].includes(url.protocol)) {
-            throw new Error("Invalid protocol");
-        }
-
-        window.location.href = url.href;
-
-    } catch {
-
-        resultMessage(
-            "⚠️",
-            "الرابط غير صحيح",
-            "أدخل رابطًا صحيحًا يبدأ بـ https:// أو http://"
-        );
-    }
-}
-
-
-// =====================================
-// 16. DELETE ENROLLMENT
-// =====================================
-
-function deleteEnrollment() {
-
-    clearInterval(enrollmentTimer);
-
-    enrolledSamples = [];
-
-    localStorage.removeItem(STORAGE_KEY);
-
-    document.getElementById("sampleCount").textContent = "0 / 5";
-    document.getElementById("progressBar").style.width = "0%";
-
-    goBtn.disabled = true;
-
-    enrollmentMessage(
-        "تم حذف تسجيل اليد من هذا المتصفح.",
-        "success"
-    );
-
-    resultMessage(
-        "🔍",
-        "في انتظار التسجيل",
-        "سجّل يدك من جديد لبدء التجربة."
-    );
-
-    updateUI();
-}
-
-
-// =====================================
-// 17. EVENTS
-// =====================================
-
-startBtn.addEventListener("click", startCamera);
-
-stopBtn.addEventListener("click", () => stopCamera());
-
-switchBtn.addEventListener("click", switchCamera);
-
-enrollBtn.addEventListener("click", startEnrollment);
-
-verifyBtn.addEventListener("click", verifyHand);
-
-deleteBtn.addEventListener("click", deleteEnrollment);
-
-goBtn.addEventListener("click", executeAction);
-
-
-// =====================================
-// 18. INITIAL STATE
-// =====================================
-
-if (enrolledSamples.length >= 3) {
-
-    enrollmentMessage(
-        "يوجد تسجيل تجريبي محفوظ على هذا الجهاز.",
-        "success"
-    );
-
-    resultMessage(
-        "🔐",
-        "النظام جاهز",
-        "شغّل الكاميرا وابدأ التحقق."
-    );
-
-} else {
-
-    enrollmentMessage(
-        "لم يتم تسجيل أي كف حتى الآن."
-    );
-}
-
-updateUI();
-
+// Events
+$('global-search').addEventListener('input', (e) => {
+  const val = e.target.value;
+  $('clear-global-search').classList.toggle('hidden', !val);
+  renderCountries(val);
+  renderChannels();
+});
+$('clear-global-search').addEventListener('click', () => {
+  $('global-search').value = '';
+  $('clear-global-search').classList.add('hidden');
+  renderCountries();
+  renderChannels();
+});
+$('category-filter').addEventListener('change', renderChannels);
+$('sort-filter').addEventListener('change', renderChannels);
+$('load-more').addEventListener('click', () => {
+  visibleCount += PAGE_SIZE;
+  renderChannels();
+});
+$('favorite-current').addEventListener('click', () => {
+  if (activeChannel) toggleFavorite(activeChannel.id);
+});
+$('stop-player').addEventListener('click', stopPlayback);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => setTab(btn.dataset.tab));
+});
+
+document.addEventListener('click', event => {
+  const countryBtn = event.target.closest('[data-country]');
+  if (countryBtn) return chooseCountry(countryBtn.dataset.country);
+  const favBtn = event.target.closest('[data-favorite]');
+  if (favBtn) { event.stopPropagation(); return toggleFavorite(favBtn.dataset.favorite); }
+  const channelCard = event.target.closest('[data-play]');
+  if (channelCard) return playChannel(channelCard.dataset.play);
+});
+
+init();
 </script>
-
 </body>
 </html>
