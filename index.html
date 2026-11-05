@@ -126,7 +126,7 @@ button:focus-visible,input:focus-visible,select:focus-visible { outline:2px soli
       </section>
     </div>
 
-    <!-- القوائم والبحث (خفيفة وسلسة) -->
+    <!-- القوائم والبحث -->
     <div class="lg:col-span-5 xl:col-span-4 space-y-3">
       
       <!-- شريط البحث والتبويبات -->
@@ -253,9 +253,10 @@ function setOverlay(title, message, loading=false) {
 }
 function hideOverlay() { $('player-overlay').classList.add('hidden'); }
 
-// دالة لتفريغ البحث فوراً عند اختيار عنصر
+// دالة تفريغ حقل البحث وإعادة ضبط الفلترة بالكامل
 function clearSearchInput() {
-  $('global-search').value = '';
+  const searchInput = $('global-search');
+  if (searchInput) searchInput.value = '';
   $('clear-global-search').classList.add('hidden');
 }
 
@@ -324,9 +325,10 @@ function renderCountries(query='') {
 }
 
 function chooseCountry(code) {
-  // تفريغ خانة البحث تماماً عند اختيار الدولة لتجنب أي تضارب
+  // تفريغ حقل البحث وإعادة رسم الدول لتظهر كاملة لاحقاً عند الرجوع
   clearSearchInput();
-  
+  renderCountries(); 
+
   currentCountry = code;
   const country = countryMap.get(code);
   
@@ -350,12 +352,14 @@ function goBackToCountries() {
   $('countries-section').classList.remove('hidden');
   $('back-to-countries-btn').classList.add('hidden');
   setTab('countries');
+  renderCountries(); // إعادة رسم كل الدول بدون أي فلتر سابقه
 }
 
 function resetToHome() {
   clearSearchInput();
   goBackToCountries();
   stopPlayback();
+  renderCountries();
 }
 
 function getFilteredChannels() {
@@ -386,11 +390,11 @@ function setTab(tab) {
   });
 
   if (tab === 'countries') {
-    if (!currentCountry) {
-      $('countries-section').classList.remove('hidden');
-      $('channels-section').classList.add('hidden');
-      $('channels-section').classList.remove('flex');
-    }
+    currentCountry = null;
+    $('countries-section').classList.remove('hidden');
+    $('channels-section').classList.add('hidden');
+    $('channels-section').classList.remove('flex');
+    renderCountries(); // ضمان عودة كل الدول
   } else {
     $('countries-section').classList.add('hidden');
     $('channels-section').classList.remove('hidden');
