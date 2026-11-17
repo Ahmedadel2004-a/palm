@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة فواتيري</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --border: #334155;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header { text-align: center; margin-bottom: 2.5rem; }
+        header h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header p { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+            box-shadow: 0 10px 30px -15px rgba(0,0,0,0.5);
+        }
+        .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+        .card-icon { font-size: 2.2rem; margin-bottom: 0.75rem; }
+        .card h2 { font-size: 1.2rem; margin-bottom: 0.25rem; }
+        .card .hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+        .input-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+        .input-group label { font-size: 0.85rem; color: var(--muted); }
+        .input-group input {
+            padding: 0.65rem 0.9rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: #0f172a;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus { border-color: var(--accent); }
+        .actions { display: flex; gap: 0.5rem; }
+        button {
+            flex: 1;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-save { background: #334155; color: #e2e8f0; }
+        .btn-save:hover { background: #475569; }
+        .btn-inquire { background: var(--accent); color: #0f172a; }
+        .btn-inquire:hover { opacity: 0.9; }
+        .status { margin-top: 0.75rem; font-size: 0.8rem; color: #4ade80; min-height: 1.2em; }
+        .footer { margin-top: 3rem; color: var(--muted); font-size: 0.75rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚡ لوحة فواتيري</h1>
+        <p>كل أرقامك في مكان واحد — استعلم بضغطة واحدة</p>
+    </header>
+
+    <div class="grid">
+        <!-- الكهرباء -->
+        <div class="card">
+            <div class="card-icon">⚡</div>
+            <h2>كهرباء الإسكندرية</h2>
+            <p class="hint">الرقم الآلي (16 رقم)</p>
+            <div class="input-group">
+                <label for="elec">رقم الحساب</label>
+                <input type="text" id="elec" placeholder="أدخل الرقم الآلي..." maxlength="16">
+            </div>
+            <div class="actions">
+                <button class="btn-save" onclick="save('elec')">حفظ</button>
+                <button class="btn-inquire" onclick="inquire('elec', 'https://alex.ahram.org.eg/')">استعلام</button>
+            </div>
+            <div class="status" id="status-elec"></div>
+        </div>
+
+        <!-- المياه -->
+        <div class="card">
+            <div class="card-icon">💧</div>
+            <h2>مياه الإسكندرية</h2>
+            <p class="hint">رقم السداد الإلكتروني (14 رقم)</p>
+            <div class="input-group">
+                <label for="water">رقم السداد</label>
+                <input type="text" id="water" placeholder="أدخل رقم السداد..." maxlength="14">
+            </div>
+            <div class="actions">
+                <button class="btn-save" onclick="save('water')">حفظ</button>
+                <button class="btn-inquire" onclick="inquire('water', 'https://alexwater.com.eg/fatora_new/')">استعلام</button>
+            </div>
+            <div class="status" id="status-water"></div>
+        </div>
+
+        <!-- الغاز -->
+        <div class="card">
+            <div class="card-icon">🔥</div>
+            <h2>غاز بتروتريد</h2>
+            <p class="hint">رقم المشترك (16 رقم)</p>
+            <div class="input-group">
+                <label for="gas">رقم المشترك</label>
+                <input type="text" id="gas" placeholder="أدخل رقم المشترك..." maxlength="16">
+            </div>
+            <div class="actions">
+                <button class="btn-save" onclick="save('gas')">حفظ</button>
+                <button class="btn-inquire" onclick="inquire('gas', 'https://www.petrotrade.com.eg/billing/billq.aspx')">استعلام</button>
+            </div>
+            <div class="status" id="status-gas"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        البيانات محفوظة على جهازك فقط — لا يتم إرسالها لأي سيرفر
+    </div>
+
+    <script>
+        const SERVICES = ['elec', 'water', 'gas'];
+
+        function save(key) {
+            const input = document.getElementById(key);
+            const val = input.value.trim();
+            if (!val) {
+                setStatus(key, '⚠️ أدخل الرقم أولاً', '#fbbf24');
+                return;
+            }
+            localStorage.setItem('bill_' + key, val);
+            setStatus(key, '✅ تم الحفظ بنجاح', '#4ade80');
+        }
+
+        function inquire(key, url) {
+            const saved = localStorage.getItem('bill_' + key);
+            if (!saved) {
+                setStatus(key, '⚠️ احفظ الرقم أولاً ثم اضغط استعلام', '#fbbf24');
+                return;
+            }
+            // فتح الموقع الرسمي في تبويب جديد
+            window.open(url, '_blank');
+            setStatus(key, '🔗 تم فتح موقع الاستعلام', '#38bdf8');
+        }
+
+        function setStatus(key, msg, color) {
+            const el = document.getElementById('status-' + key);
+            el.textContent = msg;
+            el.style.color = color;
+            setTimeout(() => { el.textContent = ''; }, 4000);
+        }
+
+        // تحميل الأرقام المحفوظة عند فتح الصفحة
+        window.onload = function() {
+            SERVICES.forEach(key => {
+                const saved = localStorage.getItem('bill_' + key);
+                if (saved) {
+                    document.getElementById(key).value = saved;
+                }
+            });
+        };
+    </script>
+</body>
+</html>
