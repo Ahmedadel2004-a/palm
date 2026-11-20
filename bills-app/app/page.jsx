@@ -1,58 +1,126 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import billsData from "../data/bills.json";
 
 const UTILITIES = [
-  { key: "electricity", icon: "⚡" },
-  { key: "water", icon: "💧" },
-  { key: "gas", icon: "🔥" },
+  { key: "electricity", icon: "⚡", param: "ref" },
+  { key: "water", icon: "💧", param: "account" },
+  { key: "gas", icon: "🔥", param: "sub" },
 ];
 
-function formatTime(iso) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("ar-EG", {
-      hour: "2-digit",
-      minute: "2-digit",
-      day: "numeric",
-      month: "long",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function StatusBadge({ data }) {
-  if (!data) return null;
-  if (data.paid === true)
+function StatusBadge({ paid }) {
+  if (paid === true)
     return <span className="badge badge-paid">مدفوعة ✅</span>;
-  if (data.paid === false)
+  if (paid === false)
     return <span className="badge badge-unpaid">مستحقة ⏳</span>;
-  return <span className="badge badge-unknown">الحالة غير معروفة</span>;
+  return null;
 }
 
-function Card({ utility, icon }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+function SavedView({ saved }) {
+  const hasData = saved.amount != null || saved.month != null;
+  return (
+    <>
+      {hasData ? (
+        <>
+          <div className="amount">{saved.amount || "—"}</div>
+          <div className="rows">
+            <div className="row">
+              <span className="k">شهر الفاتورة</span>
+              <span>{saved.month || "—"}</span>
+            </div>
+            {saved.consumption != null && (
+              <div className="row">
+                <span className="k">الاستهلاك</span>
+                <span>{saved.consumption}</span>
+              </div>
+            )}
+            {saved.arrears != null && (
+              <div className="row">
+                <span className="k">المديونية</span>
+                <span>{saved.arrears}</span>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="amount-na">لسه مفيش بيانات محفوظة</div>
+      )}
+      {saved.note && <div className="saved-note">💾 {saved.note}</div>}
+      <div className="checked-at">
+        {saved.lastUpdated
+          ? `آخر تحديث: ${saved.lastUpdated}`
+          : "لسه مستني أول تحديث"}
+      </div>
+    </>
+  );
+}
 
-  const load = useCallback(async () => {
-    setLoading(true);
+function LiveView({ data }) {
+  return (
+    <>
+      <div className="amount">
+        {data.amountDue != null ? (
+          <>
+            {data.amountDue} <span className="currency">{data.currency}</span>
+          </>
+        ) : (
+          <span className="amount-na">القيمة غير متاحة</span>
+        )}
+      </div>
+      <div className="rows">
+        {data.name && (
+          <div className="row">
+            <span className="k">الاسم</span>
+            <span>{data.name}</span>
+          </div>
+        )}
+        <div className="row">
+          <span className="k">شهر الفاتورة</span>
+          <span>{data.month || "—"}</span>
+        </div>
+        {data.consumption != null && (
+          <div className="row">
+            <span className="k">الاستهلاك</span>
+            <span>
+              {data.consumption} {data.consumptionUnit}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="live-badge">نتيجة مباشرة من موقع الشركة 🟢</div>
+    </>
+  );
+}
+
+function Card({ utility, icon, param }) {
+  const saved = billsData[utility] || {};
+  const [number, setNumber] = useState(saved.accountNumber || "");
+  // idle | loading | ok | fail
+  const [state, setState] = useState("idle");
+  const [live, setLive] = useState(null);
+
+  async function search(e) {
+    e.preventDefault();
+    const q = number.trim();
+    if (!q || state === "loading") return;
+    setState("loading");
     try {
-      const res = await fetch(`/api/bills/${utility}`, { cache: "no-store" });
-      setData(await res.json());
+      const res = await fetch(
+        `/api/bills/${utility}?${param}=${encodeURIComponent(q)}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      if (data && data.ok) {
+        setLive(data);
+        setState("ok");
+      } else {
+        setState("fail");
+      }
     } catch {
-      setData({
-        ok: false,
-        error: { message: "مشكلة في الاتصال بالسيرفر" },
-      });
-    } finally {
-      setLoading(false);
+      setState("fail");
     }
-  }, [utility]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  }
 
   return (
     <div className="card">
@@ -60,97 +128,68 @@ function Card({ utility, icon }) {
         <div className="card-title">
           <span className="card-icon">{icon}</span>
           <div>
-            {data?.label || utility}
-            <div className="company">{data?.company || ""}</div>
+            {saved.label || utility}
+            <div className="company">{saved.company || ""}</div>
           </div>
         </div>
-        {data?.ok && <StatusBadge data={data} />}
+        <StatusBadge paid={state === "ok" ? live?.paid : saved.paid} />
       </div>
 
-      {loading && (
-        <div style={{ padding: "18px 0" }}>
-          <span className="spinner" /> جاري الفحص...
+      <form className="search-row" onSubmit={search}>
+        <input
+          className="search-input"
+          type="text"
+          inputMode="numeric"
+          dir="ltr"
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          placeholder={saved.accountHint || "رقم الحساب"}
+          aria-label={saved.accountHint || "رقم الحساب"}
+        />
+        <button
+          className="search-btn"
+          type="submit"
+          disabled={state === "loading" || !number.trim()}
+        >
+          {state === "loading" ? (
+            <>
+              <span className="spinner" /> بيدور...
+            </>
+          ) : (
+            "ابحث 🔍"
+          )}
+        </button>
+      </form>
+
+      {state === "fail" && (
+        <div className="live-fail">
+          مش قادر أوصل للموقع دلوقتي — غالبًا محجوب من بره مصر 🌍. دي آخر
+          بيانات محفوظة عندي 👇
         </div>
       )}
 
-      {!loading && data?.ok && (
-        <>
-          <div className="amount">
-            {data.amountDue != null ? (
-              <>
-                {data.amountDue} <span className="currency">{data.currency}</span>
-              </>
-            ) : (
-              <span className="amount-na">القيمة غير متاحة</span>
-            )}
-          </div>
-          <div className="rows">
-            {data.name && (
-              <div className="row">
-                <span className="k">الاسم</span>
-                <span>{data.name}</span>
-              </div>
-            )}
-            <div className="row">
-              <span className="k">شهر الفاتورة</span>
-              <span>{data.month || "—"}</span>
-            </div>
-            {data.consumption != null && (
-              <div className="row">
-                <span className="k">الاستهلاك</span>
-                <span>
-                  {data.consumption} {data.consumptionUnit}
-                </span>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {!loading && data && !data.ok && data.error && (
-        <div className="error-box">{data.error.message}</div>
-      )}
-
-      {!loading && data?.tested === false && (
-        <div className="note-box">
-          ⚠️ الجزء ده لسه غير مُختبَر من مصر — الموقع الرسمي محجوب من بره
-          البلد. {data.note || ""}
-        </div>
-      )}
-
-      <div className="checked-at">
-        آخر فحص: {formatTime(data?.checkedAt)}
-      </div>
-
-      <button className="card-refresh" onClick={load} disabled={loading}>
-        {loading ? "..." : "إعادة الفحص 🔄"}
-      </button>
+      {state === "ok" && live ? <LiveView data={live} /> : <SavedView saved={saved} />}
     </div>
   );
 }
 
 export default function Home() {
-  const [tick, setTick] = useState(0);
-
   return (
     <main className="page">
       <div className="header">
         <h1>🧾 فواتيري</h1>
-        <p>كهرباء ومياه وغاز — كل الفواتير في صفحة واحدة</p>
-        <button className="refresh-all" onClick={() => setTick((t) => t + 1)}>
-          تحديث الكل 🔄
-        </button>
+        <p>كهرباء ومياه وغاز — ابحث برقم الحساب وشوف فاتورتك</p>
       </div>
-      <div className="cards" key={tick}>
+      <div className="cards">
         {UTILITIES.map((u) => (
-          <Card key={u.key} utility={u.key} icon={u.icon} />
+          <Card key={u.key} utility={u.key} icon={u.icon} param={u.param} />
         ))}
       </div>
       <div className="footer">
-        البيانات بتتجاب لحظيًا من المواقع الرسمية للشركات.
+        البحث المباشر بيجيب من مواقع الشركات لحظيًا — بيشتغل من جوه مصر بس.
         <br />
-        المياه والغاز بيشتغلوا من جوه مصر بس — لو انت خارج البلد هتظهر رسالة
-        توضح ده.
+        لو البحث ماشتغلش، بتظهر آخر بيانات محفوظة (بتتحدث تلقائيًا أول ما
+        فاتورة جديدة تنزل).
       </div>
     </main>
   );

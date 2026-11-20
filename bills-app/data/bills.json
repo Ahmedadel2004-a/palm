@@ -1,0 +1,41 @@
+{
+  "electricity": {
+    "label": "الكهرباء",
+    "company": "شركة الاسكندرية لتوزيع الكهرباء",
+    "accountNumber": "8420808023306011",
+    "accountHint": "الرقم الآلي / كود السداد",
+    "month": "نوفمبر 2026",
+    "consumption": "92 ك.و.س",
+    "amount": "101.20 جنيه",
+    "paid": true,
+    "arrears": "0 جنيه",
+    "lastUpdated": "20 نوفمبر 2026",
+    "note": "بيتم التحديث تلقائيًا أول ما فاتورة جديدة تنزل"
+  },
+  "water": {
+    "label": "المياه",
+    "company": "شركة مياه الشرب بالإسكندرية",
+    "accountNumber": "17020000580634",
+    "accountHint": "رقم السداد / الحساب",
+    "month": null,
+    "consumption": null,
+    "amount": null,
+    "paid": null,
+    "arrears": null,
+    "lastUpdated": null,
+    "note": "لسه مستني أول سكرين شوت منك يا أحمد 😄"
+  },
+  "gas": {
+    "label": "الغاز",
+    "company": "بتروتريد — Petrotrade",
+    "accountNumber": "0309191905120700",
+    "accountHint": "رقم المشترك",
+    "month": null,
+    "consumption": null,
+    "amount": null,
+    "paid": null,
+    "arrears": null,
+    "lastUpdated": null,
+    "note": "لسه مستني أول سكرين شوت منك يا أحمد 😄"
+  }
+}
