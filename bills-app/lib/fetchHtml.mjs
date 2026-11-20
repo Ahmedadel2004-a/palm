@@ -133,4 +133,4 @@ export function findArabicMonth(text) {
     if (found) return found[1] ? `${m} ${found[1]}` : m;
   }
   return null;
-        }
+}
