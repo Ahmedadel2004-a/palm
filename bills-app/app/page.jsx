@@ -1,12 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import billsData from "../data/bills.json";
 
 const UTILITIES = [
-  { key: "electricity", icon: "⚡", param: "ref" },
-  { key: "water", icon: "💧", param: "account" },
-  { key: "gas", icon: "🔥", param: "sub" },
+  {
+    key: "electricity",
+    label: "الكهرباء",
+    company: "شركة الاسكندرية لتوزيع الكهرباء",
+    accountHint: "الرقم الآلي / كود السداد",
+    icon: "⚡",
+    param: "ref",
+  },
+  {
+    key: "water",
+    label: "المياه",
+    company: "شركة مياه الشرب بالإسكندرية",
+    accountHint: "رقم السداد / الحساب",
+    icon: "💧",
+    param: "account",
+  },
+  {
+    key: "gas",
+    label: "الغاز",
+    company: "بتروتريد — Petrotrade",
+    accountHint: "رقم المشترك",
+    icon: "🔥",
+    param: "sub",
+  },
 ];
 
 function StatusBadge({ paid }) {
@@ -17,42 +37,11 @@ function StatusBadge({ paid }) {
   return null;
 }
 
-function SavedView({ saved }) {
-  const hasData = saved.amount != null || saved.month != null;
+function EmptyView() {
   return (
-    <>
-      {hasData ? (
-        <>
-          <div className="amount">{saved.amount || "—"}</div>
-          <div className="rows">
-            <div className="row">
-              <span className="k">شهر الفاتورة</span>
-              <span>{saved.month || "—"}</span>
-            </div>
-            {saved.consumption != null && (
-              <div className="row">
-                <span className="k">الاستهلاك</span>
-                <span>{saved.consumption}</span>
-              </div>
-            )}
-            {saved.arrears != null && (
-              <div className="row">
-                <span className="k">المديونية</span>
-                <span>{saved.arrears}</span>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="amount-na">
-          لا توجد بيانات محفوظة بعد، ابحث برقم الحساب لعرض أحدث فاتورة.
-        </div>
-      )}
-      {hasData && saved.note && <div className="saved-note">💾 {saved.note}</div>}
-      {saved.lastUpdated && (
-        <div className="checked-at">آخر تحديث: {saved.lastUpdated}</div>
-      )}
-    </>
+    <div className="amount-na">
+      لا توجد بيانات محفوظة. ابحث برقم الحساب لعرض أحدث فاتورة.
+    </div>
   );
 }
 
@@ -93,9 +82,8 @@ function LiveView({ data }) {
   );
 }
 
-function Card({ utility, icon, param }) {
-  const saved = billsData[utility] || {};
-  const [number, setNumber] = useState(saved.accountNumber || "");
+function Card({ utility, label, company, accountHint, icon, param }) {
+  const [number, setNumber] = useState("");
   // idle | loading | ok | fail
   const [state, setState] = useState("idle");
   const [live, setLive] = useState(null);
@@ -128,13 +116,11 @@ function Card({ utility, icon, param }) {
         <div className="card-title">
           <span className="card-icon">{icon}</span>
           <div>
-            {saved.label || utility}
-            <div className="company">{saved.company || ""}</div>
+            {label}
+            <div className="company">{company}</div>
           </div>
         </div>
-        <StatusBadge
-          paid={state === "ok" ? live?.paid : state === "fail" ? null : saved.paid}
-        />
+        <StatusBadge paid={state === "ok" ? live?.paid : null} />
       </div>
 
       <form className="search-row" onSubmit={search}>
@@ -145,8 +131,8 @@ function Card({ utility, icon, param }) {
           dir="ltr"
           value={number}
           onChange={(e) => setNumber(e.target.value)}
-          placeholder={saved.accountHint || "رقم الحساب"}
-          aria-label={saved.accountHint || "رقم الحساب"}
+          placeholder={accountHint}
+          aria-label={accountHint}
         />
         <button
           className="search-btn"
@@ -168,7 +154,7 @@ function Card({ utility, icon, param }) {
       ) : state === "ok" && live ? (
         <LiveView data={live} />
       ) : (
-        <SavedView saved={saved} />
+        <EmptyView />
       )}
     </div>
   );
@@ -182,16 +168,13 @@ export default function Home() {
         <p>كهرباء ومياه وغاز — ابحث برقم الحساب وشوف فاتورتك</p>
       </div>
       <div className="cards">
-        {UTILITIES.map((u) => (
-          <Card key={u.key} utility={u.key} icon={u.icon} param={u.param} />
+        {UTILITIES.map((utility) => (
+          <Card key={utility.key} {...utility} />
         ))}
       </div>
       <div className="footer">
-        البحث المباشر بيجيب من مواقع الشركات لحظيًا — بيشتغل من جوه مصر بس.
-        <br />
-        لو البحث ماشتغلش، بتظهر آخر بيانات محفوظة (بتتحدث تلقائيًا أول ما
-        فاتورة جديدة تنزل).
+        كل بحث يطلب البيانات مباشرة من موقع الشركة. لا يعرض الموقع بيانات محفوظة.
       </div>
     </main>
   );
-          }
+}
