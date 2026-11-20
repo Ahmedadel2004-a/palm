@@ -1,3 +1,5 @@
+import he from "he";
+
 // ============================================================================
 // أدوات الجلب والتحليل المشتركة بين المواقع الثلاثة
 // ============================================================================
@@ -73,17 +75,24 @@ export async function fetchHtml(url, options = {}) {
 
 // --------------------------- أدوات تحليل HTML ---------------------------
 
+export function decodeHtmlEntities(value) {
+  let decoded = String(value ?? "");
+  // A provider may return nested entities such as &amp;#x639;. Decode to a
+  // stable text value, with a small cap to avoid pathological nesting.
+  for (let i = 0; i < 3; i++) {
+    const next = he.decode(decoded);
+    if (next === decoded) break;
+    decoded = next;
+  }
+  return decoded;
+}
+
 export function stripTags(s) {
-  return (s || "")
+  const text = (s || "")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/<[^>]*>/g, " ");
+  return decodeHtmlEntities(text).replace(/\s+/g, " ").trim();
 }
 
 export function toNumber(s) {

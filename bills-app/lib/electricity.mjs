@@ -56,9 +56,10 @@ export async function getElectricityBill(config) {
 
 export function parseInvoice(html) {
   const kv = parseKeyValueTables(html);
-  const paid = /غير\s*مدفوعة/.test(html)
+  const text = stripTags(html);
+  const paid = /غير\s*مدفوعة/.test(text)
     ? false
-    : /مدفوعة/.test(html)
+    : /مدفوعة/.test(text)
     ? true
     : null;
   return {
@@ -76,7 +77,7 @@ export function parsePreviousConsumption(html) {
   const nameM = html.match(
     /<span>\s*الاسم\s*<\/span>\s*<strong>([^<]+)<\/strong>/
   );
-  const name = nameM ? nameM[1].trim() : null;
+  const name = nameM ? stripTags(nameM[1]) : null;
 
   // أشهر محاسبة (مثال: 202611) من بلوكات panel-heading/panel-body
   let billingMonth = null;
@@ -92,14 +93,16 @@ export function parsePreviousConsumption(html) {
 
   // جدول الاستهلاكات السابقة
   const history = [];
-  const rowRe =
-    /<tr[^>]*>\s*<td>\s*([\d.,]+)\s*<\/td>\s*<td>\s*([^<0-9]+?)\s*<\/td>\s*<td>\s*(\d{4})\s*<\/td>\s*<\/tr>/gi;
+  const rowRe = /<tr[^>]*>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/gi;
   let rm;
   while ((rm = rowRe.exec(html))) {
+    const year = toNumber(stripTags(rm[3]));
+    const kwh = toNumber(stripTags(rm[1]));
+    if (year == null || kwh == null) continue;
     history.push({
-      kwh: toNumber(rm[1]),
-      month: rm[2].trim(),
-      year: parseInt(rm[3], 10),
+      kwh,
+      month: stripTags(rm[2]),
+      year,
     });
   }
 
