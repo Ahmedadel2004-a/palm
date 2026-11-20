@@ -44,14 +44,14 @@ function SavedView({ saved }) {
           </div>
         </>
       ) : (
-        <div className="amount-na">لسه مفيش بيانات محفوظة</div>
+        <div className="amount-na">
+          لا توجد بيانات محفوظة بعد، ابحث برقم الحساب لعرض أحدث فاتورة.
+        </div>
       )}
-      {saved.note && <div className="saved-note">💾 {saved.note}</div>}
-      <div className="checked-at">
-        {saved.lastUpdated
-          ? `آخر تحديث: ${saved.lastUpdated}`
-          : "لسه مستني أول تحديث"}
-      </div>
+      {hasData && saved.note && <div className="saved-note">💾 {saved.note}</div>}
+      {saved.lastUpdated && (
+        <div className="checked-at">آخر تحديث: {saved.lastUpdated}</div>
+      )}
     </>
   );
 }
@@ -132,7 +132,9 @@ function Card({ utility, icon, param }) {
             <div className="company">{saved.company || ""}</div>
           </div>
         </div>
-        <StatusBadge paid={state === "ok" ? live?.paid : saved.paid} />
+        <StatusBadge
+          paid={state === "ok" ? live?.paid : state === "fail" ? null : saved.paid}
+        />
       </div>
 
       <form className="search-row" onSubmit={search}>
@@ -161,14 +163,13 @@ function Card({ utility, icon, param }) {
         </button>
       </form>
 
-      {state === "fail" && (
-        <div className="live-fail">
-          مش قادر أوصل للموقع دلوقتي — غالبًا محجوب من بره مصر 🌍. دي آخر
-          بيانات محفوظة عندي 👇
-        </div>
+      {state === "fail" ? (
+        <div className="live-fail">تعذر الوصول إلى موقع الشركة الآن. حاول مرة أخرى لاحقًا.</div>
+      ) : state === "ok" && live ? (
+        <LiveView data={live} />
+      ) : (
+        <SavedView saved={saved} />
       )}
-
-      {state === "ok" && live ? <LiveView data={live} /> : <SavedView saved={saved} />}
     </div>
   );
 }
@@ -193,4 +194,4 @@ export default function Home() {
       </div>
     </main>
   );
-}
+          }
