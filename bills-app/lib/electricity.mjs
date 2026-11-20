@@ -104,4 +104,4 @@ export function parsePreviousConsumption(html) {
   }
 
   return { name, billingMonth, history, latest: history[0] || null };
-    }
+}
