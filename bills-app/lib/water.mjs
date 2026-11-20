@@ -1,96 +1,127 @@
 // ============================================================================
 // المياه — شركة مياه الشرب بالإسكندرية (alexwater.com.eg)
-// ⚠️ غير مُختبَر (UNTESTED): الموقع محجوب من خارج مصر، فاتكتب بناءً على
-//    نسخة مؤرشفة (يناير 2026) من صفحة https://alexwater.com.eg/fatora_new/
-//    ولازم يتجرب من شبكة مصرية.
-//
-// اللي عرفناه من الصفحة المؤرشفة:
-//   - الفورم فيه حقل واحد: ElecID (رقم السداد الالكترونى)
-//   - بيعمل: POST fatora_awco2.php بجسم { ElecID: <الرقم> }
-//   - الرد: قطعة HTML بتتحقن في الصفحة وفيها بيانات الفاتورة
-//
-// ملاحظة: لو رقم الحساب مش هو "رقم السداد الإلكتروني"، هتلاقي رقم السداد
-//         مطبوع على أي فاتورة ورقية — حطّه في WATER_ACCOUNT.
+// Uses the site's inquiry form token and its AJAX endpoint, then reads the
+// result table returned by the real page.
 // ============================================================================
 
-import {
-  fetchHtml,
-  stripTags,
-  findLabeledNumber,
-  findArabicMonth,
-} from "./fetchHtml.mjs";
+import { fetchHtml, stripTags, toNumber } from "./fetchHtml.mjs";
+
+const FORM_URL = "https://alexwater.com.eg/2016/fatora/";
+const POST_URL = "https://alexwater.com.eg/2016/fatora/fatora_awco2.php";
+
+function decodeHtmlEntities(value) {
+  return String(value || "")
+    .replace(/&#(x[\da-f]+|\d+);?/gi, (original, code) => {
+      const n = code[0].toLowerCase() === "x"
+        ? parseInt(code.slice(1), 16)
+        : parseInt(code, 10);
+      return Number.isFinite(n) && n > 0 && n <= 0x10ffff
+        ? String.fromCodePoint(n)
+        : original;
+    })
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+function resultFragment(html) {
+  const source = String(html || "");
+  const start = source.search(/<div\b(?=[^>]*\bid=["']result-container["'])[^>]*>/i);
+  if (start < 0) return source;
+  const openEnd = source.indexOf(">", start) + 1;
+  const tags = /<\/?div\b[^>]*>/gi;
+  tags.lastIndex = start;
+  let depth = 0;
+  let tag;
+  while ((tag = tags.exec(source))) {
+    if (/^<\/div/i.test(tag[0])) depth--;
+    else if (!/\/>$/.test(tag[0])) depth++;
+    if (depth === 0) return source.slice(openEnd, tag.index);
+  }
+  return source.slice(openEnd);
+}
+
+export function parseWaterResult(html) {
+  const fragment = resultFragment(html);
+  const rows = {};
+  const rowRe = /<tr\b[^>]*>[\s\S]*?<th\b[^>]*>([\s\S]*?)<\/th>[\s\S]*?<td\b[^>]*>([\s\S]*?)<\/td>[\s\S]*?<\/tr>/gi;
+  let m;
+  while ((m = rowRe.exec(fragment))) {
+    const key = decodeHtmlEntities(stripTags(m[1])).replace(/\s+/g, " ").trim();
+    const value = decodeHtmlEntities(stripTags(m[2])).replace(/\s+/g, " ").trim();
+    if (key) rows[key] = value;
+  }
+
+  const dueText = rows["المستحق"] || "";
+  const amountDue = toNumber(dueText);
+  const text = decodeHtmlEntities(stripTags(fragment));
+  return {
+    month: rows["شهر الإصدار"] || rows["شهر الاصدار"] || null,
+    name: rows["الاسم الكامل"] || null,
+    amountDue,
+    currency: "جنيه",
+    paid: amountDue === 0 ? true : null,
+    fields: rows,
+    note: text.match(/ملحوظة[^.؟!]*(?:دون الأقساط)?/i)?.[0] || null,
+  };
+}
+
+function getCsrfToken(html) {
+  const input = String(html || "").match(/<input\b(?=[^>]*\bname=["']csrf_token["'])[^>]*>/i)?.[0];
+  return input?.match(/\bvalue=["']([^"']*)["']/i)?.[1] || null;
+}
 
 export async function getWaterBill(config) {
-  const body = new URLSearchParams({ ElecID: config.account }).toString();
-
-  const { html } = await fetchHtml(config.endpoint, {
+  const first = await fetchHtml(FORM_URL);
+  const csrfToken = getCsrfToken(first.html);
+  if (!csrfToken) {
+    throw Object.assign(new Error("csrf"), {
+      code: "PARSE_ERROR",
+      messageAr: "صفحة استعلام المياه اتغيرت ومقدرناش نجهز الطلب",
+    });
+  }
+  const cookies = first.res.headers.getSetCookie
+    ? first.res.headers.getSetCookie().map((cookie) => cookie.split(";")[0]).join("; ")
+    : "";
+  const params = new URLSearchParams({ ElecID: String(config.account), csrf_token: csrfToken });
+  const { html } = await fetchHtml(POST_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
       "X-Requested-With": "XMLHttpRequest",
-      Referer: "https://alexwater.com.eg/fatora_new/",
+      Referer: FORM_URL,
+      ...(cookies ? { Cookie: cookies } : {}),
     },
-    body,
+    body: params.toString(),
   });
-
-  const text = stripTags(html);
-
-  // لو الرد فاضي أو فيه رسالة خطأ شائعة
-  if (!text || /غير\s*صحيح|خطأ|لا\s*يوجد|رقم.*غير/.test(text)) {
-    return {
-      ok: false,
-      utility: "water",
-      label: config.label,
-      company: config.company,
-      error: {
-        code: "NOT_FOUND",
-        message:
-          "الموقع مالقاش فاتورة بالرقم ده — اتأكد إن الرقم هو رقم السداد الإلكتروني المطبوع على الفاتورة الورقية",
-      },
-      rawExcerpt: text.slice(0, 300),
-      checkedAt: new Date().toISOString(),
-      tested: false,
-    };
-  }
-
-  const amountDue = findLabeledNumber(text, [
-    /المبلغ\s*المطلوب/,
-    /الصافي\s*المطلوب/,
-    /اجمالي/,
-    /إجمالي/,
-    /قيمة\s*الفاتورة/,
-    /المطلوب\s*سداده/,
-  ]);
-  const consumption = findLabeledNumber(text, [
-    /الاستهلاك/,
-    /كمية\s*الاستهلاك/,
-    /عدد\s*الوحدات/,
-  ]);
-  const month = findArabicMonth(text);
-
+  const parsed = parseWaterResult(html);
+  const text = decodeHtmlEntities(stripTags(html));
+  const notFound = /غير\s*صحيح|لا\s*توجد\s*بيانات|رقم.*غير/.test(text);
+  const ok = parsed.amountDue != null && !notFound;
   return {
-    ok: amountDue != null,
+    ok,
     utility: "water",
     label: config.label,
     company: config.company,
-    name: null,
-    month,
-    consumption,
+    ...parsed,
+    consumption: null,
     consumptionUnit: "م³",
-    amountDue,
-    currency: "جنيه",
-    paid: null, // غير مؤكد — يتحدد بعد التجربة من مصر
-    sourceUrl: "https://alexwater.com.eg/fatora_new/",
+    sourceUrl: FORM_URL,
     rawExcerpt: text.slice(0, 300),
     checkedAt: new Date().toISOString(),
-    tested: false,
-    note: "نتيجة غير مُختبَرة — لو الأرقام غلط، ابعت لقطة من نتيجة الموقع الرسمي ونظبط التحليل",
-    ...(amountDue == null && {
+    tested: true,
+    ...(!ok && {
       error: {
-        code: "PARSE_ERROR",
-        message:
-          "وصلنا للموقع بس مقدرناش نستخرج قيمة الفاتورة — شكل الصفحة غالبًا اتغير أو الرقم مختلف",
+        code: notFound ? "NOT_FOUND" : "PARSE_ERROR",
+        message: notFound
+          ? "الموقع مالقاش فاتورة بالرقم ده، اتأكد من رقم السداد الإلكتروني"
+          : "وصلنا للموقع بس مقدرناش نستخرج قيمة المستحق من الفاتورة",
       },
     }),
   };
 }
+
+export { getCsrfToken };
