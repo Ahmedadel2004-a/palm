@@ -5,16 +5,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // ⚠️ غير مُختبَر — موقع المياه محجوب من خارج مصر
-export async function GET() {
+export async function GET(request) {
+  const account =
+    new URL(request.url).searchParams.get("account")?.trim() ||
+    CONFIG.water.account;
+  const config = { ...CONFIG.water, account };
   try {
-    const data = await getWaterBill(CONFIG.water);
+    const data = await getWaterBill(config);
     return Response.json(data);
   } catch (e) {
     return Response.json({
       ok: false,
       utility: "water",
-      label: CONFIG.water.label,
-      company: CONFIG.water.company,
+      label: config.label,
+      company: config.company,
       error: {
         code: e.code || "UNKNOWN",
         message:
